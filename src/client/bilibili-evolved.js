@@ -1,5 +1,6 @@
 // ==UserScript==
-// @name         Bilibili Evolved (Preview)
+// @name         Bilibili Evolved (Preview) (JLoeve's Fork)
+// @namespace    jloeve.bilibili-evolved
 // @version      1.11.14
 // @description  Bilibili Evolved 的预览版, 可以抢先体验新功能.
 // @author       Grant Howard, Coulomb-G
@@ -18,10 +19,10 @@
 // @exclude      *://www.bilibili.com/h5/*
 // @exclude      *://www.bilibili.com/*/h5/*
 // @run-at       document-start
-// @updateURL    https://cdn.jsdelivr.net/gh/the1812/Bilibili-Evolved@preview/bilibili-evolved.preview.user.js
-// @downloadURL  https://cdn.jsdelivr.net/gh/the1812/Bilibili-Evolved@preview/bilibili-evolved.preview.user.js
-// @supportURL   https://github.com/the1812/Bilibili-Evolved/issues
-// @homepage     https://github.com/the1812/Bilibili-Evolved
+// @updateURL    https://cdn.jsdelivr.net/gh/lonelysteve/Bilibili-Evolved@preview/bilibili-evolved.preview.user.js
+// @downloadURL  https://cdn.jsdelivr.net/gh/lonelysteve/Bilibili-Evolved@preview/bilibili-evolved.preview.user.js
+// @supportURL   https://github.com/lonelysteve/Bilibili-Evolved/issues
+// @homepage     https://github.com/lonelysteve/Bilibili-Evolved
 // @grant        unsafeWindow
 // @grant        GM_getValue
 // @grant        GM_setValue
@@ -126,26 +127,25 @@ window.EventTarget = class EventTarget {
 }
 // Safari EventTarget polyfill end
 
-import { logError, raiseEvent, loadLazyPanel, contentLoaded, fixed, isOffline, getUID, scriptVersion, getCsrf, formatCount, escapeFilename } from './utils'
-import { settings, loadSettings, settingsChangeHandlers } from './settings'
 import { Ajax, setupAjaxHook } from './ajax'
-import { loadResources } from './resource-loader'
-import { Toast } from './toast-holder'
+import { ColorProcessor } from './color-processor'
+import { installStyle, toggleStyle, uninstallStyle } from './custom-styles'
 import { DoubleClickEvent } from './double-click-event'
 import { Observer } from './observer'
-import { SpinQuery } from './spin-query'
-import { ColorProcessor } from './color-processor'
+import { Resource } from './resource'
+import { loadResources } from './resource-loader'
+import { ResourceManager } from './resource-manager'
+import { resourceManifest } from './resource-manifest'
 // [Offline build placeholder]
 import { ResourceType } from './resource-type'
-import { Resource } from './resource'
-import { resourceManifest } from './resource-manifest'
-import { StyleManager } from './style-manager'
-import { ResourceManager } from './resource-manager'
 import { getScriptBlocker } from './script-blocker'
-import { installStyle, uninstallStyle, toggleStyle } from './custom-styles'
+import { loadSettings, settings, settingsChangeHandlers } from './settings'
+import { SpinQuery } from './spin-query'
 import { store } from './store'
-
-;(async () => {
+import { StyleManager } from './style-manager'
+import { Toast } from './toast-holder'
+import { contentLoaded, escapeFilename, fixed, formatCount, getCsrf, getUID, isOffline, loadLazyPanel, logError, raiseEvent, scriptVersion } from './utils'
+(async () => {
   const redundantFrames = [
     'https://message.bilibili.com/pages/nav/index_new_sync',
     'https://message.bilibili.com/pages/nav/index_new_pc_sync',

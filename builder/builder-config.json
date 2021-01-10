@@ -6,7 +6,7 @@
     "dev": "bilibili-evolved.dev.js",
     "smallLogoPath": "images/logo-small.png",
     "logoPath": "images/logo.png",
-    "owner": "the1812",
+    "owner": "lonelysteve",
     "copyOnBuild": false,
     "bundle": "dist/bundle"
 }

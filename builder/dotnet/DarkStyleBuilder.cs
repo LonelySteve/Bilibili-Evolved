@@ -29,11 +29,11 @@ namespace BilibiliEvolved.Build
 /* ==UserStyle==
 @name         Bilibili Evolved - 夜间模式
 @namespace    Bilibili-Evolved
-@homepageURL  https://github.com/the1812/Bilibili-Evolved
-@updateURL    https://cdn.jsdelivr.net/gh/the1812/Bilibili-Evolved@preview/min/dark.user.css
+@homepageURL  https://github.com/lonelysteve/Bilibili-Evolved
+@updateURL    https://cdn.jsdelivr.net/gh/lonelysteve/Bilibili-Evolved@preview/min/dark.user.css
 @version      {offlineVersion}.0
 @license      MIT
-@author       Grant Howard (https://github.com/the1812), Coulomb-G (https://github.com/Coulomb-G)
+@author       Grant Howard (https://github.com/the1812), Coulomb-G (https://github.com/Coulomb-G), JLoeve (https://github.com/lonelysteve)
 ==/UserStyle== */
 @-moz-document domain(""bilibili.com"") {{
   {fullStyle}

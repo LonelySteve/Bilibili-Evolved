@@ -1,9 +1,9 @@
 export async function loadResources () {
-  Resource.root = 'https://raw.githubusercontent.com/the1812/Bilibili-Evolved/preview/'
+  Resource.root = 'https://raw.githubusercontent.com/lonelysteve/Bilibili-Evolved/preview/'
   switch (await GM.getValue('updateCdn')) {
     case 'jsDelivr':
     default:
-      Resource.cdnRoot = 'https://cdn.jsdelivr.net/gh/the1812/Bilibili-Evolved@preview/'
+      Resource.cdnRoot = 'https://cdn.jsdelivr.net/gh/lonelysteve/Bilibili-Evolved@preview/'
       break
     case 'GitHub':
       Resource.cdnRoot = Resource.root
