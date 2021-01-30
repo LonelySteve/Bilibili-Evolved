@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Bilibili Evolved (Preview) (JLoeve's Fork)
 // @namespace    jloeve.bilibili-evolved
-// @version      1.11.14
+// @version      1.11.15
 // @description  Bilibili Evolved 的预览版, 可以抢先体验新功能.
 // @author       Grant Howard, Coulomb-G
 // @copyright    2021, Grant Howard (https://github.com/the1812) & Coulomb-G (https://github.com/Coulomb-G)
@@ -144,7 +144,7 @@ import { SpinQuery } from './spin-query'
 import { store } from './store'
 import { StyleManager } from './style-manager'
 import { Toast } from './toast-holder'
-import { contentLoaded, escapeFilename, fixed, formatCount, getCsrf, getUID, isOffline, loadLazyPanel, logError, raiseEvent, scriptVersion } from './utils'
+import { contentLoaded, escapeFilename, fixed, formatCount, formatDuration, formatFileSize, formData, fullyLoaded, getAid, getCsrf, getDpiSourceSet, getUID, isOffline, isTyping, loadDanmakuSettingsPanel, loadLazyPanel, loadLazyPlayerSettingsPanel, loadSubtitleSettingsPanel, logError, matchPattern, raiseEvent, retrieveImageUrl, scriptVersion, videoCondition } from './utils'
 (async () => {
   const redundantFrames = [
     'https://message.bilibili.com/pages/nav/index_new_sync',
@@ -253,7 +253,11 @@ import { contentLoaded, escapeFilename, fixed, formatCount, getCsrf, getUID, isO
       logError,
       raiseEvent,
       loadLazyPanel,
+      loadLazyPlayerSettingsPanel,
+      loadDanmakuSettingsPanel,
+      loadSubtitleSettingsPanel,
       contentLoaded,
+      fullyLoaded,
       fixed,
       settings,
       settingsChangeHandlers,
@@ -278,6 +282,12 @@ import { contentLoaded, escapeFilename, fixed, formatCount, getCsrf, getUID, isO
       getCsrf,
       formatCount,
       escapeFilename,
+      videoCondition,
+      matchPattern,
+      formData,
+      retrieveImageUrl,
+      isTyping,
+      getAid,
       installStyle,
       uninstallStyle,
       toggleStyle,
