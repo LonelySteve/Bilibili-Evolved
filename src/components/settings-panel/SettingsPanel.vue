@@ -64,6 +64,7 @@ import {
 } from '@/ui'
 import { createPopper } from '@popperjs/core'
 import { dq } from '@/core/utils'
+import { addComponentListener } from '@/core/settings'
 import ComponentSettings from './ComponentSettings.vue'
 import {
   ComponentMetadata, ComponentTag, components,
@@ -131,6 +132,11 @@ export default {
         this.selectedComponent = null
       }
     },
+  },
+  mounted() {
+    addComponentListener('settingsPanel.dockSide', () => {
+      activePopper?.update()
+    })
   },
   methods: {
     closePopper() {
@@ -200,6 +206,7 @@ export default {
     width: auto;
     min-width: 320px;
     height: var(--panel-height);
+    --header-height: 50px;
     transition: opacity 0.2s 0.2s ease-out;
     body.dark & {
       background-color: #222;
@@ -208,7 +215,7 @@ export default {
     }
     .settings-panel-header {
       box-sizing: border-box;
-      height: 52px;
+      height: var(--header-height);
       padding: 12px;
       display: flex;
       align-items: center;
@@ -257,11 +264,10 @@ export default {
     .settings-panel-content {
       flex: 1;
       display: flex;
-      max-height: calc(95vh - 52px);
+      max-height: calc(var(--panel-height) - var(--header-height));
       .sidebar {
         display: flex;
         flex-direction: column;
-        border-right: 1px solid #8882;
         z-index: 1;
       }
       .main {

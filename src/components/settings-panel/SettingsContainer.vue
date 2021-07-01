@@ -103,13 +103,11 @@ export default {
   // }
   & > .sidebar {
     position: fixed;
-    left: 0;
     top: 50%;
     z-index: 99999;
-    transform: translateX(-50%) translateY(-50%);
+    transform: translateX(calc(-50% * var(--direction))) translateY(-50%);
     & > * {
       transition: transform 0.3s ease-out, opacity 0.3s ease-out;
-      // transition: none;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
       $size: 26px;
@@ -142,7 +140,7 @@ export default {
         transition: fill 0.3s ease-out;
       }
       &:hover {
-        transform: translateX(60%) scale(1.1);
+        transform: translateX(calc(60% * var(--direction))) scale(1.1);
         background-color: #fff;
         body.dark & {
           background-color: #333;
@@ -157,26 +155,18 @@ export default {
         }
       }
       &.open {
-        transform: translateX(100%) scale(1.25);
+        transform: translateX(calc(100% * var(--direction))) scale(1.5);
         opacity: 0;
       }
     }
   }
   .settings-panel-popup {
-    transition: transform 0.15s ease-out, opacity 0.15s ease-out;
-    // transition-duration: 0.15s;
-    // left: 50%;
+    transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     top: 50%;
     z-index: 100001;
-    // transform: translateX(-50%) translateY(-50%);
-    // &.close {
-    //   transform: translateX(-50%) translateY(-50%) scale(0.95);
-    // }
-    // &.open {
-    //   transform: translateX(-50%) translateY(-50%) scale(1);
-    // }
     &.close {
-      transform: translateZ(0) translateY(-50%) translateX(-12px);
+      transform: translateZ(0) translateY(-50%) translateX(calc(-48% * var(--direction)));
     }
     &.open {
       transform: translateZ(0) translateY(-50%) translateX(0);
@@ -185,9 +175,10 @@ export default {
   .widgets-panel-popup {
     top: 50%;
     z-index: 100001;
-    transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+    transition: transform 0.3s cubic-bezier(0.22, 0.61, 0.36, 1),
+      opacity 0.3s cubic-bezier(0.22, 0.61, 0.36, 1);
     &.close {
-      transform: translateZ(0)translateY(-50%) translateX(-12px);
+      transform: translateZ(0)translateY(-50%) translateX(calc(-48% * var(--direction)));
     }
     &.open {
       transform: translateZ(0) translateY(-50%) translateX(0);
@@ -196,4 +187,5 @@ export default {
 }
 @import "./dock/center";
 @import "./dock/left";
+@import "./dock/right";
 </style>
