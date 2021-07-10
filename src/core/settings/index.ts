@@ -1,15 +1,15 @@
 import { components, UserComponentMetadata } from '@/components/component'
-import { UserStyle } from '@/plugins/style'
 import { PluginMetadata, plugins } from '@/plugins/plugin'
+import { UserStyle } from '@/plugins/style'
 import { componentToSettings, isUserComponent } from './helpers'
 
 type Property = string | number | symbol
 /** 表示一个组件的设置 */
-export interface ComponentSettings {
+export interface ComponentSettings<O = Record<string, unknown>> {
   /** 是否启用此组件 */
   enabled: boolean
   /** 组件选项 */
-  options: { [key: string]: any }
+  options: O
 }
 /** 脚本总设置 */
 export interface Settings {
@@ -213,3 +213,4 @@ settingsLoaded = true
 /** 脚本当前的设置 */
 export const settings: Settings = internalSettings
 export * from './helpers'
+

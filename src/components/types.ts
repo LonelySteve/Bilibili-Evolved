@@ -1,6 +1,6 @@
-import { TestPattern, Executable, VueModule } from '@/core/common-types'
-import { ComponentSettings } from '@/core/settings'
+import { Executable, TestPattern, VueModule } from '@/core/common-types'
 import { CoreApis } from '@/core/core-apis'
+import { ComponentSettings } from '@/core/settings'
 import { PluginSetupParameters } from '@/plugins/plugin'
 import { Range } from '@/ui/range'
 import { Widget } from '@/widgets/widget'
@@ -116,10 +116,10 @@ export const componentsTags = {
   } as ComponentTag,
 }
 /** 组件入口函数 */
-export type ComponentEntry<T = unknown> = (
+export type ComponentEntry<O = Record<string, unknown>, T = unknown> = (
   context: {
     /** 当前组件的设置 */
-    settings: ComponentSettings
+    settings: ComponentSettings<O>
     /** 当前组件的信息 */
     metadata: ComponentMetadata
     /** 核心 API */
@@ -158,11 +158,11 @@ export interface FunctionalMetadata {
   extraOptions?: Executable<VueModule>
   /** 设置匹配的URL, 不匹配则不运行此组件 */
   urlInclude?: TestPattern
-  /** 设置不匹配的URL, 不匹配则不运行此组件, 优先级高于`urlInclude` */
+  /** 设置不匹配的URL, 匹配则不运行此组件, 优先级高于`urlInclude` */
   urlExclude?: TestPattern
 }
 /** 组件基本信息 */
-export interface ComponentMetadata extends FunctionalMetadata {
+export interface ComponentMetadata<O extends ComponentOptions = Record<string, ComponentOption>> extends FunctionalMetadata {
   /** 组件名称 */
   name: string
   /** 显示名称 */
@@ -181,7 +181,7 @@ export interface ComponentMetadata extends FunctionalMetadata {
   */
   description?: ComponentDescription
   /** 组件子选项 */
-  options?: ComponentOptions
+  options?: O
 }
 /** 用户组件的非函数基本信息, 用于直接保存为 JSON */
 export type UserComponentMetadata = Omit<ComponentMetadata, keyof FunctionalMetadata>
