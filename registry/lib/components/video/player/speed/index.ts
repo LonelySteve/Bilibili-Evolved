@@ -102,7 +102,6 @@ export const component: ComponentMetadata = {
       defaultValue: {},
       hidden: true,
     },
-
     extendVideoSpeedList: {
       displayName: "扩展视频倍数列表",
       defaultValue: [],
