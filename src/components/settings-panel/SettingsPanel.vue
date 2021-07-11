@@ -155,14 +155,6 @@ export default {
         this.$refs.detailsPopup.$el,
         {
           placement: 'right',
-          // modifiers: [
-          //   {
-          //     name: 'offset',
-          //     options: {
-          //       offset: [0, 4],
-          //     },
-          //   },
-          // ],
         },
       )
     },
@@ -273,7 +265,6 @@ export default {
       .main {
         flex: 1;
         padding: 0;
-        overflow: auto;
         position: relative;
         @include no-scrollbar();
         .component-list {

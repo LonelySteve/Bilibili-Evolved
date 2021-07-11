@@ -1,4 +1,4 @@
-import { ComponentMetadata } from '@/components/component'
+import { ComponentMetadata } from '@/components/types'
 import { styledComponentEntry } from '@/components/styled-component'
 import { feedsUrlsWithoutDetail } from '@/core/utils/urls'
 
@@ -52,7 +52,7 @@ export const component: ComponentMetadata = {
   name: 'foldComments',
   displayName: '快速收起评论',
   description: {
-    'zh-CN': '动态里查看评论区时, 在底部添加一个<span>收起评论</span>按钮, 这样就不用再回到上面收起了.',
+    'zh-CN': '动态里查看评论区时, 在底部添加一个`收起评论`按钮, 这样就不用再回到上面收起了.',
   },
   enabledByDefault: true,
   urlInclude: feedsUrlsWithoutDetail,
