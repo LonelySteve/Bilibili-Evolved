@@ -6,7 +6,7 @@ export const component: ComponentMetadata = {
     const { addComponentListener } = await import('@/core/settings')
     addComponentListener(metadata.name, (value: boolean) => {
       document.body.classList.toggle('simplify-comment', value)
-    })
+    }, true)
   }),
   displayName: '简化评论区',
   description: {
@@ -25,5 +25,4 @@ export const component: ComponentMetadata = {
   tags: [
     componentsTags.style,
   ],
-  enabledByDefault: true,
 }

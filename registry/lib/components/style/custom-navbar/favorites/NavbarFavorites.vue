@@ -24,7 +24,7 @@
           <a
             class="cover-container"
             target="_blank"
-            :href="'https://www.bilibili.com/video/av' + card.aid"
+            :href="'https://www.bilibili.com/video/' + card.bvid"
           >
             <DpiImage
               class="cover"
@@ -37,7 +37,7 @@
           <a
             class="title"
             target="_blank"
-            :href="'https://www.bilibili.com/video/av' + card.aid"
+            :href="'https://www.bilibili.com/video/' + card.bvid"
             :title="card.title"
           >{{ card.title }}</a>
           <a
@@ -79,10 +79,12 @@ import { getUID } from '@/core/utils'
 import { getJsonWithCredentials } from '@/core/ajax'
 import { logError } from '@/core/utils/log'
 import { VideoCard } from '@/components/feeds/video-card'
+import { getComponentSettings } from '@/core/settings'
 import { notSelectedFolder } from './favorites-folder'
 import FavoritesFolderSelect from './FavoritesFolderSelect.vue'
 import { popperMixin } from '../mixins'
 
+const navbarOptions = getComponentSettings('customNavbar').options
 interface FavoritesItemInfo extends VideoCard {
   favoriteTimestamp: number
   favoriteTime: string
@@ -90,6 +92,7 @@ interface FavoritesItemInfo extends VideoCard {
 const favoriteItemMapper = (item: any): FavoritesItemInfo => ({
   id: item.id,
   aid: item.id,
+  bvid: item.bvid,
   coverUrl: item.cover.replace('http:', 'https:'),
   favoriteTimestamp: item.fav_time * 1000,
   favoriteTime: formatDate(new Date(item.fav_time * 1000)),
@@ -108,20 +111,23 @@ async function searchAllList() {
     return
   }
   try {
-    const json = await getJsonWithCredentials(
-      `https://api.bilibili.com/x/v3/fav/resource/list?media_id=${this.folder.id}&pn=${this.searchPage}&ps=20&keyword=${this.search}&order=mtime&type=0&tid=0`,
-    )
-    if (json.code !== 0) {
+    const jsonCurrent = await getJsonWithCredentials(`https://api.bilibili.com/x/v3/fav/resource/list?media_id=${this.folder.id}&pn=${this.searchPage}&ps=20&keyword=${this.search}&order=mtime&type=0&tid=0`)
+    const jsonAll = await getJsonWithCredentials(`https://api.bilibili.com/x/v3/fav/resource/list?media_id=${this.folder.id}&pn=${this.searchPage}&ps=20&keyword=${this.search}&order=mtime&type=1&tid=0`)
+    if (jsonCurrent.code !== 0 && jsonAll.code !== 0) {
       return
     }
+    const currentItems = lodash.get(jsonCurrent, 'data.medias', []) || []
+    const allItems = lodash.get(jsonAll, 'data.medias', []) || []
     this.searchPage++
-    const items = lodash.get(json, 'data.medias', []) as any[]
-    if (items === null) {
+    if (currentItems.length + allItems.length === 0) {
       this.hasMoreSearchPage = false
       return
     }
     const results = lodash.uniqBy(
-      this.filteredCards.concat(items.map(favoriteItemMapper)),
+      this.filteredCards.concat(
+        currentItems.map(favoriteItemMapper),
+        allItems.map(favoriteItemMapper),
+      ),
       (card: FavoritesItemInfo) => card.id,
     )
     this.filteredCards = results
@@ -205,7 +211,12 @@ export default Vue.extend({
       }
       return json.data.medias
         .filter(
-          (item: any) => item.attr !== 9, // 过滤掉已失效视频
+          (item: any) => {
+            if (navbarOptions.showDeadVideos) {
+              return true
+            }
+            return item.attr !== 9 && item.attr !== 1 // 过滤掉已失效视频
+          },
         )
         .map(favoriteItemMapper)
     },
@@ -406,9 +417,9 @@ export default Vue.extend({
           max-width: calc(100% - 16px);
           @include h-center();
           @include round-bar(24);
-          background-color: #8882;
+          border: 1px solid #8882;
           &:hover {
-            background-color: #8884;
+            background-color: #8882;
           }
           .face {
             border-radius: 50%;

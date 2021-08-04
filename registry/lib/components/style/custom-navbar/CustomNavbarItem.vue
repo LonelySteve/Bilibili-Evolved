@@ -159,6 +159,7 @@ export default Vue.extend({
   }
 
   .main-content {
+    transition: none;
     font-size: 10pt;
     height: 100%;
     display: flex;
@@ -200,7 +201,7 @@ export default Vue.extend({
     &.iframe-container {
       border: none;
       box-shadow: none;
-      iframe {
+      &:not(.transparent) iframe {
         box-shadow: rgba(0, 0, 0, 0.2) 0 4px 8px 0px;
       }
     }

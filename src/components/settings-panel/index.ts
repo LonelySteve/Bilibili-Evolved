@@ -3,8 +3,8 @@ import { LoadingMode } from '@/core/loading-mode'
 import { TextColor } from '@/core/text-color'
 import { CdnTypes } from '@/core/cdn-types'
 import { addComponentListener } from '@/core/settings'
+import { DownloadPackageEmitMode } from '@/core/download-mode'
 import { ComponentEntry, ComponentMetadata, componentsTags } from '../types'
-import { addI18nData } from '../i18n/helpers'
 
 export const WidgetsPlugin = 'widgets'
 export enum SettingsPanelDockSide {
@@ -28,7 +28,6 @@ const entry: ComponentEntry = async ({ metadata }) => {
 export const component: ComponentMetadata = {
   name: 'settingsPanel',
   displayName: '通用设置',
-  enabledByDefault: true,
   configurable: false,
   // hidden: true,
   entry,
@@ -76,27 +75,28 @@ export const component: ComponentMetadata = {
       defaultValue: '[n - ][ep]',
       displayName: '批量命名格式',
     },
+    downloadPackageEmitMode: {
+      defaultValue: DownloadPackageEmitMode.packed,
+      displayName: '文件下载模式',
+      dropdownEnum: DownloadPackageEmitMode,
+    },
     devMode: {
       defaultValue: false,
       displayName: '开发者模式',
     },
   },
   tags: [componentsTags.general],
-  plugin: {
-    displayName: '通用设置 - 多语言',
-    setup: () => {
-      addI18nData(
-        'en-US',
-        [
-          ['通用设置', 'General'],
-          ['实验性', 'Experimental'],
-          ['通用', 'General'],
-          ['开发者模式', 'Dev mode'],
-          ['辅助颜色', 'Accent color'],
-          ['功能加载模式', 'Script loading mode'],
-          ['样式加载模式', 'Style loading mode'],
-        ],
-      )
+  i18n: {
+    'en-US': {
+      map: [
+        ['通用设置', 'General'],
+        ['实验性', 'Experimental'],
+        ['通用', 'General'],
+        ['开发者模式', 'Dev mode'],
+        ['辅助颜色', 'Accent color'],
+        ['功能加载模式', 'Script loading mode'],
+        ['样式加载模式', 'Style loading mode'],
+      ],
     },
   },
 }

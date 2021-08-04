@@ -3,21 +3,33 @@ import { favoriteListUrls, videoUrls } from '@/core/utils/urls'
 import { KeyBindingAction } from '../../utils/keymap/bindings'
 
 const entry = async () => {
-  const { playerReady, aidReady, mountVueComponent } = await import('@/core/utils')
+  const {
+    playerReady,
+    mountVueComponent,
+    getUID,
+  } = await import('@/core/utils')
+  if (!getUID()) {
+    return
+  }
+
   await playerReady()
-  await aidReady()
   const favoriteButton = dq('.video-toolbar .ops .collect')
   if (!favoriteButton) {
     return
   }
   const QuickFavorite = await import('./QuickFavorite.vue')
-  const vm: Vue & {
+  let vm: Vue & {
     aid: string
-  } = mountVueComponent(QuickFavorite)
-  favoriteButton.insertAdjacentElement('afterend', vm.$el)
+    syncFavoriteState: () => Promise<void>
+  }
   const { videoChange } = await import('@/core/observer')
   videoChange(() => {
+    if (!vm) {
+      vm = mountVueComponent(QuickFavorite)
+      favoriteButton.insertAdjacentElement('afterend', vm.$el)
+    }
     vm.aid = unsafeWindow.aid
+    vm.syncFavoriteState()
   })
 }
 export const component: ComponentMetadata = {
@@ -26,7 +38,6 @@ export const component: ComponentMetadata = {
   description: {
     'zh-CN': '启用快速收藏, 在视频页面可以一键收藏到设定的某个收藏夹.',
   },
-  enabledByDefault: false,
   entry,
   unload: () => {
     dqa('.ops .quick-favorite').forEach((it: HTMLElement) => (it.style.display = 'none'))
@@ -54,7 +65,7 @@ export const component: ComponentMetadata = {
           displayName: '快速收藏',
           run: context => {
             const { clickElement } = context
-            clickElement('.quick-favorite', context)
+            return clickElement('.quick-favorite', context)
           },
         }
       })

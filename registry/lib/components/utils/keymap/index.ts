@@ -1,6 +1,5 @@
 import { styledComponentEntry } from '@/components/styled-component'
 import { ComponentEntry, ComponentMetadata } from '@/components/types'
-import { cheeseUrls, mediaListUrls, videoAndBangumiUrls } from '@/core/utils/urls'
 import { addComponentListener } from '@/core/settings'
 import { actions } from './actions'
 import { KeyBinding, KeyBindingConfig, loadKeyBindings } from './bindings'
@@ -23,7 +22,6 @@ const entry: ComponentEntry = styledComponentEntry(() => import('./playback-tip.
     const bindings = parseBindings(
       { ...presetBase, ...preset, ...settings.options.customKeyBindings },
     )
-    console.log('update keymap', bindings, presetBase, preset, settings.options.customKeyBindings)
     if (config) {
       config.bindings = bindings
     } else {
@@ -33,9 +31,6 @@ const entry: ComponentEntry = styledComponentEntry(() => import('./playback-tip.
 
   addComponentListener('keymap.preset', update, true)
   addComponentListener('keymap.customKeyBindings', update)
-  // createProxy(actions, () => update())
-  // createProxy(presets, () => update())
-  // createProxy(presetBase, () => update())
 })
 export const component: ComponentMetadata = {
   name: 'keymap',
@@ -44,15 +39,14 @@ export const component: ComponentMetadata = {
     componentsTags.video,
     componentsTags.utils,
   ],
-  urlInclude: [
-    ...videoAndBangumiUrls,
-    ...cheeseUrls,
-    ...mediaListUrls,
-  ],
+  // urlInclude: [
+  //   ...videoAndBangumiUrls,
+  //   ...cheeseUrls,
+  //   ...mediaListUrls,
+  // ],
   entry,
   unload: () => { config && (config.enable = false) },
   reload: () => { config && (config.enable = true) },
-  enabledByDefault: true,
   description: {
     'zh-CN': '为视频播放器启用更多的快捷键, 快捷键列表可在`快捷键设置`中查看和配置.',
   },

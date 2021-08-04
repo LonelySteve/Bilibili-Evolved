@@ -1,6 +1,7 @@
 import { toggleStyle } from '@/components/styled-component'
 import { ComponentMetadata } from '@/components/types'
 import { addComponentListener } from '@/core/settings'
+import { playerUrls } from '@/core/utils/urls'
 
 export const component: ComponentMetadata = {
   ...toggleStyle('removePlayerPopup', () => import('./remove-popup.scss'), ({ settings, metadata }) => {
@@ -17,7 +18,7 @@ export const component: ComponentMetadata = {
   description: {
     'zh-CN': '删除视频播放器中出现的各种弹窗, 类别可在选项中分别选择.',
   },
-  enabledByDefault: true,
+  urlInclude: playerUrls,
   options: {
     votes: {
       defaultValue: false,
@@ -30,6 +31,10 @@ export const component: ComponentMetadata = {
     comboLikes: {
       defaultValue: true,
       displayName: '关注/三连',
+    },
+    rates: {
+      defaultValue: true,
+      displayName: '评分',
     },
   },
 }

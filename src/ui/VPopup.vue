@@ -78,24 +78,18 @@ export default Vue.extend({
     },
   },
   watch: {
-    open(value: boolean) {
+    open() {
       if (this.lazy && !this.loaded) {
         this.loaded = true
       }
-      if (this.autoClose && this.trigger !== null) {
-        const eventTypes = ['mousedown', 'touchstart']
-        eventTypes.forEach(type => {
-          if (value) {
-            document.body.addEventListener(type, this.openHandler)
-          } else {
-            document.body.removeEventListener(type, this.openHandler)
-          }
-        })
-      }
+      this.setAutoClose()
     },
   },
   mounted() {
     const element = this.$el as HTMLElement
+    if (this.open) {
+      this.setAutoClose()
+    }
     if (this.escClose) {
       element.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
@@ -116,7 +110,7 @@ export default Vue.extend({
       const targetElement = e.target as HTMLElement
       const toastContainer = document.querySelector('.toast-card-container')
       let isOutside = targetElement !== this.trigger
-        && !this.trigger.contains(targetElement)
+        && !this.trigger?.contains(targetElement)
         && targetElement !== this.$el
         && !this.$el.contains(targetElement)
         && !toastContainer?.contains(targetElement)
@@ -129,6 +123,18 @@ export default Vue.extend({
       }
       if (isOutside) {
         this.$emit('popup-change', false)
+      }
+    },
+    setAutoClose() {
+      if (this.autoClose/*  && this.trigger !== null */) {
+        const eventTypes = ['mousedown', 'touchstart']
+        eventTypes.forEach(type => {
+          if (this.open) {
+            document.documentElement.addEventListener(type, this.openHandler)
+          } else {
+            document.documentElement.removeEventListener(type, this.openHandler)
+          }
+        })
       }
     },
     toggle() {

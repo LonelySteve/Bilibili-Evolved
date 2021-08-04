@@ -37,6 +37,8 @@ export interface HistoryItem {
   durationText: string
   /** 视频的分P */
   page?: number
+  /** 直播状态: 0 未开播 1 直播中 2 轮播中 (似乎新 API 不会返回 2) */
+  liveStatus?: number
   /** 视频的tag/直播的分区名 */
   tagName?: string
 }
@@ -98,11 +100,14 @@ const formatTime = (date: Date) => {
   return `${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
 }
 const parseHistoryItem = (item: any): HistoryItem => {
+  if (item.history.business === 'article') {
+    item.history.cid = item.history.oid
+  }
   const {
     epid, // 番剧 ep号
     bvid, // 视频 bv号
     cid, // 专栏 cv号
-    oid, // 直播 房间号
+    oid, // 直播 房间号 / 专栏 cv 号
   } = item.history
   const progressParam = item.progress > 0 ? `t=${item.progress}` : 't=0'
   const progress = item.progress === -1 ? 1 : (item.progress / item.duration)
@@ -128,7 +133,7 @@ const parseHistoryItem = (item: any): HistoryItem => {
       ...commonInfo,
       id: epid,
       url: `https://www.bilibili.com/bangumi/play/ep${epid}?${progressParam}`,
-      title: item.show_title,
+      title: item.show_title || item.title,
       upName: item.title,
       type: HistoryType.bangumi,
     }
@@ -154,6 +159,7 @@ const parseHistoryItem = (item: any): HistoryItem => {
       ...commonInfo,
       id: oid,
       url: `https://live.bilibili.com/${oid}`,
+      liveStatus: item.live_status,
       type: HistoryType.live,
     }
   }

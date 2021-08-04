@@ -1,19 +1,18 @@
-import { getUID } from '@/core/utils'
+import { formData, getUID } from '@/core/utils'
 import { getJson } from '@/core/ajax'
 import { LaunchBarActionProvider } from './launch-bar-action'
-import { updateHistory } from './history-provider'
+import { addHistoryItem } from './history-provider'
 
 export const search = (keyword: string) => {
   if (!keyword) {
     return
   }
-  updateHistory(keyword)
+  addHistoryItem(keyword)
   const params = {
     keyword,
-    from_source: 'banner_search',
+    from_source: 'nav_suggest_new',
   }
-  const paramsString = Object.entries(params).map(([k, v]) => `${k}=${v}`).join('&')
-  window.open(`https://search.bilibili.com/all?${paramsString}`, '_blank')
+  window.open(`https://search.bilibili.com/all?${formData(params)}`, '_blank')
 }
 export const searchProvider: LaunchBarActionProvider = {
   name: 'search',

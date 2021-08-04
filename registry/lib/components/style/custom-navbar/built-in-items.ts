@@ -1,12 +1,21 @@
 import { CustomNavbarItemInit } from './custom-navbar-item'
 import { messages } from './messages/messages'
+import { ranking } from './ranking/ranking'
 import { userInfo } from './user-info/user-info'
 import { logo } from './logo/logo'
 import { home } from './home/home'
-import { gamesIframe, livesIframe } from './iframe/iframe'
+import {
+  gamesIframe,
+  livesIframe,
+  mangaIframe,
+} from './iframe/iframe'
 import { blanks } from './flexible-blank/flexible-blank'
 import {
-  ranking, music, drawing, shop, manga,
+  bangumi,
+  music,
+  drawing,
+  shop,
+  match,
 } from './simple-links/simple-links'
 import { upload } from './upload/upload'
 import { search } from './search/search'
@@ -21,13 +30,15 @@ export const getBuiltInItems = (): CustomNavbarItemInit[] => [
   blank1,
   logo,
   home,
+  bangumi,
   ranking,
   drawing,
   music,
   gamesIframe,
   livesIframe,
   shop,
-  manga,
+  match,
+  mangaIframe,
   blank2,
   search,
   blank3,

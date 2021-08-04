@@ -13,6 +13,8 @@ cd Bilibili-Evolved
 
 ```powershell
 yarn
+cd registry
+yarn
 ```
 
 ### 本体
@@ -46,6 +48,9 @@ yarn
 // @exclude      *://member.bilibili.com/studio/bs-editor/*
 // @exclude      *://www.bilibili.com/h5/*
 // @exclude      *://www.bilibili.com/*/h5/*
+// @exclude      *://message.bilibili.com/pages/nav/index_new_sync
+// @exclude      *://message.bilibili.com/pages/nav/index_new_pc_sync
+// @exclude      *://t.bilibili.com/h5/dynamic/specification
 // @run-at       document-start
 // @grant        unsafeWindow
 // @grant        GM_getValue
@@ -60,11 +65,11 @@ yarn
 // @connect      www.bing.com
 // @connect      translate.google.cn
 // @connect      translate.google.com
+// @connect      localhost
 // @connect      *
 // @require      https://cdn.jsdelivr.net/npm/lodash@4.17.15/lodash.min.js
 // @require      https://cdn.jsdelivr.net/npm/jszip@3.1.5/dist/jszip.min.js
 // @require      https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.min.js
-// @require      https://cdn.jsdelivr.net/npm/vue-markdown-v2@0.1.7/dist/vue-markdown.js
 // @icon         https://cdn.jsdelivr.net/gh/the1812/Bilibili-Evolved@preview/images/logo-small.png
 // @icon64       https://cdn.jsdelivr.net/gh/the1812/Bilibili-Evolved@preview/images/logo.png
 // ==/UserScript==
@@ -121,6 +126,8 @@ export const component: ComponentMetadata = {
 }
 ```
 > 在 `ComponentMetadata` 的源码中有各属性的说明
+
+> `author` 字段记得填, 这个因为我自己写的组件不需要所以就不是 required 的
 
 5. 根据组件的复杂度, 可以自行在文件夹中创建其他文件来组织代码, 下方还列出了一些可用资源可以帮助你加快开发.
 6. 编译并调试组件.

@@ -1,4 +1,9 @@
-import { getFeeds, FeedsCardType } from '@/components/feeds/api'
+import {
+  getFeeds,
+  FeedsCardType,
+  applyContentFilter,
+  isPreOrderedVideo,
+} from '@/components/feeds/api'
 import { descendingStringSort } from '@/core/utils/sort'
 import { logError } from '@/core/utils/log'
 import { setLatestID } from '@/components/feeds/notify'
@@ -56,8 +61,11 @@ export const nextPageMixin = <MappedItem extends { id: string }, RawItem>(
           }
           const jsonCards = lodash.get(json, 'data.cards', []).map(jsonMapper) as MappedItem[]
 
-          let concatCards = cards.concat(jsonCards).sort(
-            descendingStringSort(it => it.id),
+          let concatCards = applyContentFilter(
+            cards
+              .concat(jsonCards)
+              .sort(descendingStringSort(it => it.id))
+              .filter(card => !isPreOrderedVideo(card)),
           )
 
           if (concatCards.length > 0 && this.onCardsUpdate) {

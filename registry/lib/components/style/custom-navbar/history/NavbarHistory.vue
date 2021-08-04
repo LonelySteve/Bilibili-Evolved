@@ -1,31 +1,37 @@
 <template>
   <div class="history-list">
     <div class="header">
-      <div class="type-filters">
-        <div v-for="t of types" :key="t.name" class="type-filter">
-          <VButton
-            round
-            :title="t.displayName"
-            :class="{ checked: t.checked }"
-            @click="toggleTypeFilter(t)"
+      <div class="header-row">
+        <div class="search">
+          <TextBox v-model="search" placeholder="搜索" linear></TextBox>
+        </div>
+        <div class="operations">
+          <a
+            class="operation"
+            target="_blank"
+            href="https://www.bilibili.com/account/history"
           >
-            <VIcon :icon="t.icon" :size="18"></VIcon>
-          </VButton>
+            <VButton title="查看更多" round>
+              <VIcon icon="mdi-dots-horizontal" :size="18"></VIcon>
+            </VButton>
+          </a>
         </div>
       </div>
-      <div class="search">
-        <TextBox v-model="search" placeholder="搜索" linear></TextBox>
-      </div>
-      <div class="operations">
-        <a
-          class="operation"
-          target="_blank"
-          href="https://www.bilibili.com/account/history"
-        >
-          <VButton title="查看更多" round>
-            <VIcon icon="mdi-dots-horizontal" :size="18"></VIcon>
-          </VButton>
-        </a>
+      <div class="header-row">
+        过滤:
+        <div class="type-filters">
+          <div v-for="t of types" :key="t.name" class="type-filter">
+            <VButton
+              round
+              :title="(t.checked ? '不显示' : '显示') + t.displayName"
+              :class="{ checked: t.checked }"
+              @click="toggleTypeFilter(t)"
+            >
+              <VIcon :icon="t.icon" :size="18"></VIcon>
+              {{ t.displayName }}
+            </VButton>
+          </div>
+        </div>
       </div>
     </div>
     <div class="content">
@@ -58,6 +64,11 @@
                   v-if="h.progressText"
                   class="floating progress-number"
                 >{{ h.progress >= 1 ? '已看完' : h.progressText }}</div>
+                <div
+                  v-if="h.liveStatus !== undefined"
+                  class="floating duration live-status"
+                  :class="{ on: h.liveStatus === 1 }"
+                >{{ h.liveStatus === 1 ? '直播中': '未开播' }}</div>
                 <div
                   v-if="h.durationText"
                   class="floating duration"
@@ -226,18 +237,21 @@ export default Vue.extend({
     box-sizing: border-box;
   }
   .header {
-    @include h-center();
-    justify-content: space-between;
-    margin: 16px 12px;
+    @include v-stretch(8px);
+    margin: 16px 12px 0 12px;
+    .header-row {
+      @include h-center(8px);
+      justify-content: space-between;
+    }
     .type-filters {
-      @include h-center();
+      @include h-center(8px);
       .type-filter {
-        &:not(:last-child) {
-          margin-right: 8px;
-        }
         .be-button {
-          @include round-button();
+          padding: 4px 8px 4px 6px;
           color: #8888;
+          .be-icon {
+            margin-right: 6px;
+          }
           &.checked {
             color: inherit;
           }
@@ -246,14 +260,10 @@ export default Vue.extend({
     }
     .search {
       flex: 1;
-      margin: 0 8px;
     }
     .operations {
-      @include h-center();
+      @include h-center(8px);
       .operation {
-        &:not(:last-child) {
-          margin-right: 8px;
-        }
         .be-button {
           @include round-button();
         }
@@ -270,7 +280,7 @@ export default Vue.extend({
     .be-loading {
       align-self: center;
       text-align: center;
-      margin-bottom: 12px;
+      margin: 12px 0;
     }
     .cards {
       @include items-animation();
@@ -278,17 +288,16 @@ export default Vue.extend({
       scroll-behavior: smooth;
       position: relative;
       @include no-scrollbar();
-      padding: 0 12px;
       padding-bottom: 12px;
       .empty-tip {
         text-align: center;
       }
       .time-group {
-        padding-bottom: 16px;
+        // padding-bottom: 16px;
         @include items-animation();
         &-name {
-          padding-bottom: 8px;
-          font-size: 13px;
+          padding: 8px 12px;
+          font-size: 12px;
           position: sticky;
           top: 0;
           z-index: 1;
@@ -298,6 +307,7 @@ export default Vue.extend({
           }
         }
         &-items {
+          padding: 0 12px;
           .floating {
             @include round-bar(20);
             @include h-center();
@@ -354,6 +364,12 @@ export default Vue.extend({
                 left: $padding;
                 bottom: $padding;
                 padding: 0 6px;
+              }
+              .live-status {
+                &.on {
+                  background-color: var(--theme-color);
+                  color: var(--foreground-color);
+                }
               }
               .progress-number {
                 left: $padding;

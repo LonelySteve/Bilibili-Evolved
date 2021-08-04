@@ -1,12 +1,20 @@
-import { Executable, TestPattern, VueModule } from '@/core/common-types'
+import {
+  Executable, I18nDescription, TestPattern, VueModule,
+} from '@/core/common-types'
 import { CoreApis } from '@/core/core-apis'
 import { ComponentSettings } from '@/core/settings'
-import { PluginSetupParameters } from '@/plugins/plugin'
+import { PluginMinimalData } from '@/plugins/plugin'
 import { Range } from '@/ui/range'
 import { Widget } from '@/widgets/widget'
+import { LanguagePack } from './i18n/types'
 
-/** 组件描述, 不同的属性对应不同语言 */
-export type ComponentDescription = string | { 'zh-CN': string;[key: string]: string }
+type Author = {
+  name: string
+  link: string
+}
+type Optional<Target, Props extends keyof Target> = {
+  [P in Props]?: Target[P]
+} & Omit<Target, Props>
 /** 组件标签 */
 export interface ComponentTag {
   /** 标签的名称 */
@@ -146,14 +154,7 @@ export interface FunctionalMetadata {
   /** 关闭时执行 */
   unload?: Executable
   /** 插件化数据定义 */
-  plugin?: {
-    /** 初始化函数, 可在其中注册数据, 添加代码注入等 */
-    setup: (params: PluginSetupParameters) => void | Promise<void>
-    /** 插件ID, 省略则为组件名 + `.plugin` */
-    name?: string
-    /** 插件显示名称 */
-    displayName?: string
-  }
+  plugin?: Optional<PluginMinimalData, 'name'>
   /** 额外想要展示在设置里的选项 UI */
   extraOptions?: Executable<VueModule>
   /** 设置匹配的URL, 不匹配则不运行此组件 */
@@ -169,19 +170,20 @@ export interface ComponentMetadata<O extends ComponentOptions = Record<string, C
   displayName: string
   /** 标签 */
   tags: ComponentTag[]
-  /** 是否默认开启 */
-  enabledByDefault: boolean
+  /** 是否默认开启, 省略时为 true */
+  enabledByDefault?: boolean
   /** 是否可更改, 不可更改时启用状态固定为 `enabledByDefault` 的值 */
   configurable?: boolean
   /**  是否在设置界面中隐藏 (代码仍可操作) */
   hidden?: boolean
-  /**
-   * 组件描述 (可使用HTML), 可以设置为对象提供多语言的描述 (`key: 语言代码`)
-   * @todo 应使用Markdown
-  */
-  description?: ComponentDescription
+  /** 组件描述 (markdown), 可以设置为对象提供多语言的描述 (`key: 语言代码`) */
+  description?: I18nDescription
   /** 组件子选项 */
   options?: O
+  /** i18n 数据 */
+  i18n?: Record<string, LanguagePack>
+  /** 作者信息 */
+  author?: Author | Author[]
 }
 /** 用户组件的非函数基本信息, 用于直接保存为 JSON */
 export type UserComponentMetadata = Omit<ComponentMetadata, keyof FunctionalMetadata>

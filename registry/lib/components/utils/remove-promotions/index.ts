@@ -1,5 +1,4 @@
 import { ComponentEntry, ComponentMetadata } from '@/components/types'
-import { styledComponentEntry } from '@/components/styled-component'
 
 const entry: ComponentEntry = async ({ settings, metadata }) => {
   const { addComponentListener } = await import('@/core/settings')
@@ -50,11 +49,16 @@ const entry: ComponentEntry = async ({ settings, metadata }) => {
 export const component: ComponentMetadata = {
   name: 'removePromotions',
   displayName: '删除广告',
-  entry: styledComponentEntry(() => import('./remove-promotions.scss'), entry),
+  entry,
+  instantStyles: [
+    {
+      name: 'removePromotions',
+      style: () => import('./remove-promotions.scss'),
+    },
+  ],
   tags: [
     componentsTags.utils,
   ],
-  enabledByDefault: true,
   description: {
     'zh-CN': `
 删除站内的各种广告. 包括首页的推广模块, 手机app推荐, 视频页面右侧的广告等.

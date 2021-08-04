@@ -9,8 +9,8 @@ import {
  * @param code 组件代码
  */
 export const installComponent = async (code: string) => {
-  const { parseExternalInput } = await import('../core/external-input')
   const { components } = await import('./component')
+  const { parseExternalInput } = await import('../core/external-input')
   const component = await parseExternalInput<ComponentMetadata>(code)
   if (component === null) {
     throw new Error('无效的组件代码')
@@ -51,23 +51,11 @@ export const installComponent = async (code: string) => {
     metadata: userMetadata,
     settings: componentToSettings(component),
   }
-  // 同步到 components 数组
   components.push(component)
   componentsMap[component.name] = component
-  if (component.plugin) {
-    const { loadPlugin, extractPluginFromComponent } = await import('../plugins/plugin')
-    const plugin = extractPluginFromComponent(component)
-    loadPlugin(plugin)
-  }
-  if (component.instantStyles) {
-    const { loadInstantStyle } = await import('@/core/style')
-    await loadInstantStyle(component)
-  }
-  const { loadComponent } = await import('./component')
-  loadComponent(component)
   return {
     metadata: component,
-    message: `已安装组件'${component.displayName}'.`,
+    message: `已安装组件'${component.displayName}', 刷新后生效`,
   }
 }
 
@@ -92,13 +80,11 @@ export const uninstallComponent = async (nameOrDisplayName: string) => {
   // 如果已加载
   const index = components.findIndex(it => it.name === name)
   if (index !== -1) {
-    const { instantStyles } = components[index]
     // 移除可能的 instantStyles
+    const { instantStyles } = components[index]
     if (instantStyles) {
-      const { getDefaultStyleID } = await import('@/core/style')
-      instantStyles.forEach(s => {
-        document.getElementById(getDefaultStyleID(s.name))?.remove()
-      })
+      const { removeStyle } = await import('@/core/style')
+      instantStyles.forEach(s => removeStyle(s.name))
     }
     // 移除可能的 widgets
     componentSettings.enabled = false

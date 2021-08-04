@@ -1,0 +1,84 @@
+@mixin replace-with-icon() {
+  display: block;
+  width: 36px;
+  color: #eee;
+  font: normal normal normal 20px/1 "Material Design Icons";
+  text-rendering: auto;
+  line-height: inherit;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+body.touch-player-control {
+  .bilibili-player {
+    * {
+      -webkit-tap-highlight-color: transparent !important;
+    }
+    .bilibili-player-area {
+      .bilibili-player-video-control-wrap {
+        padding: 0 !important;
+        .bilibili-player-video-btn {
+          height: 100% !important;
+          padding-left: 2px !important;
+          padding-right: 2px !important;
+          &.bilibili-player-video-btn-start {
+            padding-left: 22px !important;
+          }
+          &.bilibili-player-video-btn-fullscreen {
+            padding-right: 18px !important;
+          }
+        }
+        .bilibili-player-video-btn-pagelist {
+          width: 36px !important;
+          .bilibili-player-video-btn-name {
+            display: none !important;
+          }
+          &::before {
+            content: "\F0279";
+            @include replace-with-icon();
+          }
+        }
+        .bilibili-player-video-btn-speed {
+          width: 36px !important;
+          &-name {
+            display: none !important;
+          }
+          &::before {
+            content: "\F08FF";
+            @include replace-with-icon();
+          }
+        }
+      }
+      #bilibili_pbp_pin {
+        right: 0 !important;
+      }
+    }
+    &.mode-fullscreen,
+    &.mode-webfullscreen {
+      .bilibili-player-area {
+        .bilibili-player-video-control-bottom-center {
+          padding: 0 12px !important;
+        }
+        .bilibili-player-video-btn {
+          flex-shrink: 0 !important;
+          flex-basis: 48px !important;
+        }
+        .bilibili-player-video-btn-speed,
+        .bilibili-player-video-btn-pagelist {
+          width: 54px !important;
+          &::before {
+            width: 50px;
+            font-size: 26px;
+          }
+        }
+        .bilibili-player-video-btn-start {
+          padding-top: 0 !important;
+          // height: 32px !important;
+        }
+        .bilibili-player-video-danmaku-switch {
+          // width: 20px !important;
+          padding-left: 0 !important;
+        }
+      }
+    }
+  }
+}

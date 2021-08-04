@@ -43,15 +43,18 @@
 </template>
 
 <script lang="ts">
-import { dqa } from '@/core/utils'
+import {
+  VPopup,
+  VIcon,
+} from '@/ui'
 
 export default {
   name: 'SettingsContainer',
   components: {
-    VPopup: () => import('@/ui/VPopup.vue').then(m => m.default),
+    VPopup,
+    VIcon,
     SettingsPanel: () => import('./SettingsPanel.vue').then(m => m.default),
     WidgetsPanel: () => import('./WidgetsPanel.vue').then(m => m.default),
-    VIcon: () => import('@/ui/icon/VIcon.vue').then(m => m.default),
   },
   data() {
     return {
@@ -93,6 +96,9 @@ export default {
   display: none !important;
 }
 .be-settings {
+  body.player-mode-blackmask & {
+    visibility: hidden;
+  }
   line-height: normal;
   font-size: 12px;
   --panel-height: calc(100vh - 120px);
@@ -185,6 +191,9 @@ export default {
       transform: translateZ(0) translateY(-50%) translateX(0);
     }
   }
+}
+.bilibili-player-dm-tip-wrap {
+  pointer-events: none !important;
 }
 @import "./dock/center";
 @import "./dock/left";

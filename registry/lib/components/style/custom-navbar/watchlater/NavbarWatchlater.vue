@@ -4,7 +4,7 @@
       <div class="search">
         <TextBox v-model="search" linear placeholder="搜索"></TextBox>
       </div>
-      <a class="operation" target="_blank" href="https://www.bilibili.com/watchlater/#">
+      <a class="operation" target="_blank" href="https://www.bilibili.com/medialist/play/watchlater">
         <VButton class="round-button" title="播放全部" round>
           <VIcon icon="mdi-play" :size="18"></VIcon>
         </VButton>
@@ -137,12 +137,9 @@ export default Vue.extend({
       }
       const getLink = (item: RawWatchlaterItem) => {
         if (this.redirect) {
-          return `https://www.bilibili.com/video/av${item.aid}`
+          return `https://www.bilibili.com/video/${item.bvid}`
         }
-        if (item.bvid) {
-          return `https://www.bilibili.com/watchlater/#/${item.bvid}`
-        }
-        return `https://www.bilibili.com/watchlater/#/av${item.aid}`
+        return `https://www.bilibili.com/medialist/play/watchlater/${item.bvid}`
       }
       const cards = rawList.map(item => {
         const href = (() => {
@@ -153,7 +150,7 @@ export default Vue.extend({
           const page = item.cid === 0 ? 1 : pages.indexOf(item.cid) + 1
           return this.redirect
             ? `${getLink(item)}?p=${page}`
-            : `${getLink(item)}/p${page}`
+            : getLink(item)
         })()
         const percent = Math.round((1000 * item.progress) / item.duration) / 1000
         return {
@@ -212,12 +209,6 @@ export default Vue.extend({
   justify-content: space-between;
   align-items: center;
 
-  @mixin button-background {
-    background-color: #8882;
-    &:hover {
-      background-color: #8884;
-    }
-  }
   @mixin floating-button-background {
     background-color: #000c;
   }
@@ -374,8 +365,11 @@ export default Vue.extend({
         align-self: center;
         max-width: calc(100% - 16px);
         @include h-center();
-        @include button-background();
         @include round-bar(24);
+        border: 1px solid #8882;
+        &:hover {
+          background-color: #8882;
+        }
         .face {
           border-radius: 50%;
           margin-right: 6px;

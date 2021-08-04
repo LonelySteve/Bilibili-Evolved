@@ -18,7 +18,7 @@ export const componentOptionsToSettings = (options: ComponentOptions) => (
  */
 export const componentToSettings = (component: ComponentMetadata): ComponentSettings => (
   {
-    enabled: component.enabledByDefault,
+    enabled: component.enabledByDefault ?? true,
     options: component.options ? componentOptionsToSettings(component.options) : {},
   }
 )
@@ -54,7 +54,9 @@ export const getComponentSettings = (component: ComponentMetadata | string): Com
   if (typeof component === 'string') {
     const componentMetadata = componentsMap[component]
     if (componentMetadata === undefined) {
-      console.warn('No settings found for component:', component)
+      if (settings.components.settingsPanel.options.devMode) {
+        console.warn('No settings found for component:', component)
+      }
       return emptySettings
     }
     component = componentMetadata
@@ -91,7 +93,7 @@ export const isComponentEnabled = (component: ComponentMetadata | string) => {
   }
   // 不可更改的组件永远返回默认值
   if (component.configurable === false) {
-    return component.enabledByDefault
+    return component.enabledByDefault ?? true
   }
   return getComponentSettings(component).enabled
 }

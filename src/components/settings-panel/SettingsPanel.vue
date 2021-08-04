@@ -36,6 +36,7 @@
             @click.native="selectComponent(c)"
           >
           </ComponentSettings>
+          <VEmpty v-if="renderedComponents.length === 0" />
         </div>
       </div>
       <VPopup
@@ -61,10 +62,12 @@ import {
   VIcon,
   TextBox,
   VPopup,
+  VEmpty,
 } from '@/ui'
 import { createPopper } from '@popperjs/core'
 import { dq } from '@/core/utils'
 import { addComponentListener } from '@/core/settings'
+import { getHook } from '@/plugins/hook'
 import ComponentSettings from './ComponentSettings.vue'
 import {
   ComponentMetadata, ComponentTag, components,
@@ -74,13 +77,14 @@ import ComponentTags from './ComponentTags.vue'
 import { getDescriptionText } from '../description'
 
 let activePopper: ReturnType<typeof createPopper>
-const defaultSearchFilter = () => true
+const defaultSearchFilter = (items: ComponentMetadata[]) => items
 export default {
   name: 'SettingsPanel',
   components: {
     VIcon,
     TextBox,
     VPopup,
+    VEmpty,
     ComponentSettings,
     ComponentDetail,
     ComponentTags,
@@ -111,16 +115,15 @@ export default {
   },
   watch: {
     searchKeyword: lodash.debounce(function searchKeywordWatch() {
-      if (this.searchKeyword !== '') {
-        this.searchFilter = defaultSearchFilter
-        this.$refs.componentTags?.reset()
-      }
+      // if (this.searchKeyword !== '') {
+      //   this.$refs.componentTags?.reset()
+      // }
       this.updateRenderedComponents()
     }, 200),
     searchFilter() {
-      if (this.searchFilter !== defaultSearchFilter) {
-        this.searchKeyword = ''
-      }
+      // if (this.searchFilter !== defaultSearchFilter) {
+      this.searchKeyword = ''
+      // }
       this.updateRenderedComponents()
     },
     components() {
@@ -144,11 +147,17 @@ export default {
       this.selectedComponent = null
     },
     selectComponent(component: ComponentMetadata) {
-      const isAlreadySelected = this.selectedComponent?.name === component.name
+      const closeHooks = getHook('settingsPanel.componentDetail.close')
+      const openHooks = getHook('settingsPanel.componentDetail.open')
+      const selectedName = this.selectedComponent?.name
+      const isAlreadySelected = selectedName === component.name
+      closeHooks.before(selectedName)
       this.closePopper()
+      closeHooks.after(selectedName)
       if (isAlreadySelected) {
         return
       }
+      openHooks.before(component.name)
       this.selectedComponent = component
       activePopper = createPopper(
         dq(`.component-settings[data-name=${component.name}]`),
@@ -157,9 +166,10 @@ export default {
           placement: 'right',
         },
       )
+      openHooks.after(component.name)
     },
     updateRenderedComponents() {
-      this.renderedComponents = components.filter(c => {
+      const internalFiltered = components.filter(c => {
         if (c.hidden) {
           return false
         }
@@ -170,10 +180,17 @@ export default {
             c.tags.map(t => `${t.name}\n${t.displayName}`).join('\n'),
             getDescriptionText(c),
           ]
-          return text.join('\n').toLowerCase().includes(this.searchKeyword.toLowerCase()) && this.searchFilter(c)
+          return text.join('\n').toLowerCase().includes(this.searchKeyword.toLowerCase())
         }
-        return this.searchFilter(c)
+        return true
       })
+      // if (this.searchKeyword) {
+      //   console.log('updateRenderedComponents', this.searchKeyword)
+      //   this.renderedComponents = internalFiltered
+      //   return
+      // }
+      // console.log('updateRenderedComponents', this.searchKeyword)
+      this.renderedComponents = this.searchFilter(internalFiltered)
     },
   },
 }
@@ -186,6 +203,7 @@ export default {
   z-index: 1000;
   .settings-panel {
     @include shadow();
+    @include v-stretch();
     position: relative;
     overscroll-behavior: contain;
     border-radius: 8px;
@@ -193,8 +211,6 @@ export default {
     color: black;
     border: 1px solid #8882;
     box-sizing: content-box;
-    display: flex;
-    flex-direction: column;
     width: auto;
     min-width: 320px;
     height: var(--panel-height);
@@ -209,15 +225,13 @@ export default {
       box-sizing: border-box;
       height: var(--header-height);
       padding: 12px;
-      display: flex;
-      align-items: center;
       border-bottom: 1px solid #8882;
+      @include h-center(8px);
       @include text-color();
       // body.dark & {
       //   border-color: #333;
       // }
       .title {
-        margin-left: 6px;
         font-size: 18px;
         font-weight: bold;
       }
@@ -226,7 +240,7 @@ export default {
         @include h-center();
         justify-content: center;
         .be-textbox {
-          flex: 0 0 120px;
+          flex: 1 0 0;
         }
         .be-icon {
           margin-right: 8px;
@@ -239,7 +253,6 @@ export default {
         }
       }
       .peek {
-        margin-right: 8px;
         cursor: pointer;
       }
       .collaspe,
@@ -267,6 +280,10 @@ export default {
         padding: 0;
         position: relative;
         @include no-scrollbar();
+        .be-empty {
+          min-height: 36px;
+          padding: 7px;
+        }
         .component-list {
           display: grid;
           grid-template-columns: auto;

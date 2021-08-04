@@ -1,5 +1,3 @@
-/* Original author: kdxcxs (https://github.com/kdxcxs) */
-
 import { toggleStyle } from '@/components/styled-component'
 import { ComponentMetadata } from '@/components/types'
 import { DanmakuRecord, forEachVideoDanmaku } from '@/components/video/video-danmaku'
@@ -9,8 +7,14 @@ import { playerUrls } from '@/core/utils/urls'
 
 export const component: ComponentMetadata = {
   displayName: '启用弹幕空降',
+  author: {
+    name: 'kdxcxs',
+    link: 'https://github.com/kdxcxs',
+  },
+  description: {
+    'zh-CN': '为可能含有时间点的弹幕添加下划线, 点击可以跳到视频对应时间.',
+  },
   tags: [componentsTags.video],
-  enabledByDefault: true,
   urlInclude: playerUrls,
   ...toggleStyle('danmakuAirborne', () => import('./airborne.scss'), async ({ settings }) => {
     const { enabled } = settings
@@ -48,9 +52,7 @@ export const component: ComponentMetadata = {
       }
       const time = getAirborneTime(target.textContent)
       if (!Number.isNaN(time)) {
-        const video = dq('video') as HTMLVideoElement
-        video.currentTime = time
-        video.play()
+        unsafeWindow.player.seek(time, false)
       }
     }
     const addAirborneStyle = (danmaku: DanmakuRecord) => {

@@ -6,13 +6,18 @@ import { KeyBindingAction, KeyBindingActionContext } from './bindings'
 export const clickElement = (target: string | HTMLElement, context: KeyBindingActionContext) => {
   const { event } = context
   const mouseEvent = new MouseEvent('click', {
-    ..._.pick(event, 'ctrlKey', 'shiftKey', 'altKey', 'metaKey'),
+    ...lodash.pick(event, 'ctrlKey', 'shiftKey', 'altKey', 'metaKey'),
   })
   if (typeof target === 'string') {
-    (dq(target) as HTMLElement)?.dispatchEvent(mouseEvent)
+    const targetElement = dq(target) as HTMLElement
+    if (!targetElement) {
+      return false
+    }
+    targetElement.dispatchEvent(mouseEvent)
   } else {
     target.dispatchEvent(mouseEvent)
   }
+  return true
 }
 export const useClickElement = (target: string | HTMLElement) => (
   (context: KeyBindingActionContext) => clickElement(target, context)
@@ -23,7 +28,7 @@ export const changeVideoTime = (delta: number | (() => number)) => () => {
   console.log(`[keymap] requested video time change, delta = ${delta}`)
   if (!video) {
     console.log('[keymap] video element not found')
-    return
+    return false
   }
   if (!unsafeWindow.player) {
     // fallback
@@ -32,6 +37,7 @@ export const changeVideoTime = (delta: number | (() => number)) => () => {
   }
   console.log('[keymap] player API seek')
   unsafeWindow.player.seek(video.currentTime + deltaNumber, video.paused)
+  return true
 }
 /** 提示框用的`setTimeout`句柄 */
 let tipTimeoutHandle: number
@@ -84,14 +90,21 @@ export const builtInActions: Record<string, KeyBindingAction> = {
   volumeUp: {
     displayName: '增加音量',
     run: () => {
+      if (!unsafeWindow.player) {
+        return false
+      }
       const current = unsafeWindow.player.volume()
       unsafeWindow.player.volume(current + 0.1)
       showTip(`${Math.round(unsafeWindow.player.volume() * 100)}%`, 'mdi-volume-high')
+      return true
     },
   },
   volumeDown: {
     displayName: '降低音量',
     run: () => {
+      if (!unsafeWindow.player) {
+        return false
+      }
       const current = unsafeWindow.player.volume()
       unsafeWindow.player.volume(current - 0.1)
       const after = Math.round(unsafeWindow.player.volume() * 100)
@@ -100,11 +113,15 @@ export const builtInActions: Record<string, KeyBindingAction> = {
       } else {
         showTip(`${after}%`, 'mdi-volume-high')
       }
+      return true
     },
   },
   mute: {
     displayName: '静音',
     run: context => {
+      if (!unsafeWindow.player) {
+        return false
+      }
       clickElement('.bilibili-player-video-btn-volume .bilibili-player-iconfont-volume', context)
       const isMute = unsafeWindow.player.isMute()
       if (isMute) {
@@ -112,6 +129,7 @@ export const builtInActions: Record<string, KeyBindingAction> = {
       } else {
         showTip('已取消静音', 'mdi-volume-high')
       }
+      return true
     },
   },
   pictureInPicture: {
@@ -138,6 +156,9 @@ export const builtInActions: Record<string, KeyBindingAction> = {
       return ((context: KeyBindingActionContext) => {
         const { event } = context
         const likeButton = dq('.video-toolbar .like, .tool-bar .like-info') as HTMLSpanElement
+        if (!likeButton) {
+          return false
+        }
         event.preventDefault()
         const fireEvent = (name: string, args: Event) => {
           const customEvent = new CustomEvent(name, args)
@@ -153,6 +174,7 @@ export const builtInActions: Record<string, KeyBindingAction> = {
             fireEvent('click', e)
           }
         }, { once: true })
+        return true
       })
     })(),
   },
@@ -161,10 +183,11 @@ export const builtInActions: Record<string, KeyBindingAction> = {
     run: () => {
       const checkbox = dq('.bilibili-player-video-danmaku-switch input') as HTMLInputElement
       if (!checkbox) {
-        return
+        return false
       }
       checkbox.checked = !checkbox.checked
       raiseEvent(checkbox, 'change')
+      return true
     },
   },
   longJumpBackward: {
@@ -194,7 +217,7 @@ export const builtInActions: Record<string, KeyBindingAction> = {
       // menu size: 176.65 x 194 (2020-06-09)
       const player = dq('.bilibili-player-video-wrap') as HTMLElement
       if (!player) {
-        return
+        return false
       }
       const rect = player.getBoundingClientRect()
       player.dispatchEvent(new MouseEvent('contextmenu', {
@@ -206,13 +229,14 @@ export const builtInActions: Record<string, KeyBindingAction> = {
         clientX: rect.x + rect.width / 2 - 176.65 / 2,
         clientY: rect.y + rect.height / 2 - 194 / 2,
       }))
+      return true
     },
   },
   seekBegin: {
     displayName: '回开头',
     run: () => {
       if (!unsafeWindow.player) {
-        return
+        return false
       }
       unsafeWindow.player.play()
       setTimeout(() => {
@@ -222,6 +246,7 @@ export const builtInActions: Record<string, KeyBindingAction> = {
           toastText.textContent = ' 00:00'
         }
       })
+      return true
     },
   },
 }

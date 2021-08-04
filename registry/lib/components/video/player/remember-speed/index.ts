@@ -5,11 +5,14 @@ import { KeyBindingAction, KeyBindingActionContext } from 'registry/lib/componen
 export const component: ComponentMetadata = {
   name: 'rememberVideoSpeed',
   displayName: '倍速记忆',
+  author: {
+    name: 'JLoeve',
+    link: 'https://github.com/LonelySteve',
+  },
   description: {
     'zh-CN': '记忆上次选择的视频播放速度, 还可以使用更多倍速来扩展原生倍速菜单.',
   },
   tags: [componentsTags.video],
-  enabledByDefault: true,
   urlInclude: playerUrls,
   entry: async () => {
     const { VideoSpeedController } = await import('./controller')
@@ -20,13 +23,13 @@ export const component: ComponentMetadata = {
     displayName: '倍速记忆 - 快捷键支持',
     setup: async ({ addData }) => {
       const { getComponentSettings } = await import('@/core/settings')
-      const { VideoSpeedController } = await import('./controller')
       const videoSpeed = async (
         context: KeyBindingActionContext,
         controllerAction: (
-          controller: InstanceType<typeof VideoSpeedController>, rates: number[]
+          controller: InstanceType<typeof import('./controller')['VideoSpeedController']>, rates: number[]
         ) => void,
       ) => {
+        const { VideoSpeedController } = await import('./controller')
         const controller = await VideoSpeedController.getInstance()
         controllerAction(controller, VideoSpeedController.supportedRates)
         context.showTip(`${controller.playbackRate}x`, 'mdi-fast-forward')
@@ -41,6 +44,7 @@ export const component: ComponentMetadata = {
                 || rates[rates.length - 1],
               )
             })
+            return true
           },
         }
         actions.videoSpeedDecrease = {
@@ -52,6 +56,7 @@ export const component: ComponentMetadata = {
                 || rates[0],
               )
             })
+            return true
           },
         }
         actions.videoSpeedReset = {
@@ -60,6 +65,7 @@ export const component: ComponentMetadata = {
             videoSpeed(context, controller => {
               controller.toggleVideoSpeed()
             })
+            return true
           },
         }
         if (getComponentSettings('rememberVideoSpeed').options.individualRemember) {
@@ -69,6 +75,7 @@ export const component: ComponentMetadata = {
               videoSpeed(context, controller => {
                 controller.reset(true)
               })
+              return true
             },
           }
         }

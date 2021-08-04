@@ -1,4 +1,5 @@
 import { ComponentMetadata } from '@/components/component'
+import { I18nDescription } from '@/core/common-types'
 import { deleteValue } from '@/core/utils'
 import { CoreApis } from '../core/core-apis'
 import { addData, registerData, registerAndGetData } from './data'
@@ -22,8 +23,13 @@ export interface PluginMinimalData {
   name: string
   /** 显示名称, 默认同插件名称 */
   displayName?: string
+  /** 插件描述, 类型同 `ComponentMetadata.description` */
+  description?: I18nDescription
 }
-export type PluginMetadata = Required<PluginMinimalData>
+type PartialRequired<Target, Props extends keyof Target> = Target & {
+  [P in Props]-?: Target[P]
+}
+export type PluginMetadata = PartialRequired<PluginMinimalData, 'displayName'>
 
 /** 可根据插件名称检索对应的内置插件 */
 export const pluginsMap: { [name: string]: PluginMetadata } = {}
@@ -71,15 +77,15 @@ export const installPlugin = async (code: string) => {
   }
   settings.userPlugins[plugin.name] = newPlugin
   plugins.push(newPlugin)
-  const { coreApis } = await import('../core/core-apis')
-  plugin.setup({
-    coreApis,
-    addData,
-    addHook,
-    registerData,
-    registerAndGetData,
-    getHook,
-  })
+  // const { coreApis } = await import('../core/core-apis')
+  // plugin.setup({
+  //   coreApis,
+  //   addData,
+  //   addHook,
+  //   registerData,
+  //   registerAndGetData,
+  //   getHook,
+  // })
   return {
     metadata: plugin,
     message: `已安装插件'${plugin.displayName || plugin.name}', 刷新后生效`,

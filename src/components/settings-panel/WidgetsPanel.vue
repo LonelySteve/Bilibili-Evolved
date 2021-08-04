@@ -5,7 +5,7 @@
     </div>
     <!-- <div class="widgets-loading" v-if="loading">加载中...</div> -->
     <VEmpty v-if="!loading && widgets.length === 0" class="widgets-empty"></VEmpty>
-    <transition-group name="widget-item" tag="div" class="widget-items">
+    <div class="widget-items">
       <component
         :is="w.component"
         v-for="w of widgets"
@@ -13,7 +13,7 @@
         class="widget-item"
         :options="w.options"
       ></component>
-    </transition-group>
+    </div>
   </div>
 </template>
 
@@ -70,6 +70,7 @@ export default Vue.extend({
           deleteValue(this.widgets, (widget: Widget) => widget.name === w.name)
         }
       })
+      console.log('updated widgets', this.widgets)
     },
   },
   created() {
@@ -99,7 +100,6 @@ export default Vue.extend({
   // box-sizing: content-box;
   // overflow: auto;
   @include popup();
-  @include no-scrollbar();
   @include text-color();
   // @include shadow();
   // body.dark & {
@@ -122,7 +122,7 @@ export default Vue.extend({
   }
   .widget-items {
     position: relative;
-    @include v-stretch();
+    @include v-stretch(8px);
     align-items: flex-start;
     .widget-item {
       font-size: 14px;
@@ -138,17 +138,11 @@ export default Vue.extend({
         position: absolute;
         white-space: nowrap;
       }
-      &:not(:last-child) {
-        margin-bottom: 8px;
-      }
     }
     .multiple-widgets {
-      @include v-center();
+      @include v-stretch(8px);
       align-items: flex-start;
       position: relative;
-      > .default-widget:not(:last-child) {
-        margin-bottom: 8px;
-      }
     }
   }
 }

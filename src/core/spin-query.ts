@@ -1,4 +1,5 @@
-import { allMutations } from './observer'
+import { allMutations, videoChange } from './observer'
+import { bwpVideoFilter } from './utils'
 
 /** 轮询设置 */
 export interface SpinQueryConfig {
@@ -72,7 +73,7 @@ const selectPromise = <T = Element>(
     if (selectCache.has(query)) {
       return selectCache.get(query) as Promise<T>
     }
-    realQuery = () => document.querySelector(query) as any
+    realQuery = () => document.querySelector(bwpVideoFilter(query)) as any
   } else {
     realQuery = query
   }
@@ -118,13 +119,13 @@ const selectAllCache = new Map<string, Promise<unknown>>()
 const selectAllPromise = <T extends { length: number } = Element[]>(
   query: string | (() => T),
   getPromise: (realQuery: () => T) => Promise<T>,
-) => {
+): Promise<T> => {
   let realQuery: () => T
   if (typeof query === 'string') {
     if (selectAllCache.has(query)) {
       return selectAllCache.get(query) as Promise<T>
     }
-    realQuery = () => Array.from(document.querySelectorAll(query)) as any
+    realQuery = () => Array.from(document.querySelectorAll(bwpVideoFilter(query))) as any
   } else {
     realQuery = query
   }
@@ -196,14 +197,11 @@ export const count = <T extends { length: number }>(
 
 let hasVideoPromiseCache: Promise<string>
 /**
- * 等待视频加载, 可获取到`cid`时结束, 返回`boolean`值代表是否存在视频
- * @param config 轮询设置
+ * 等待视频加载, 可获取到 `cid` 时结束, 返回 `boolean` 值代表是否存在视频
  */
-export const hasVideo = async (
-  config?: SpinQueryConfig,
-) => {
+export const hasVideo = async () => {
   if (!hasVideoPromiseCache) {
-    hasVideoPromiseCache = select(() => (unsafeWindow || window).cid, config)
+    hasVideoPromiseCache = new Promise(resolve => videoChange(() => resolve(unsafeWindow.cid)))
   }
   const cid = await hasVideoPromiseCache
   return Boolean(cid)

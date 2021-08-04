@@ -14,6 +14,7 @@
         <a
           class="keymap-settings-header-help"
           href="https://github.com/the1812/Bilibili-Evolved/blob/v2/registry/lib/components/utils/keymap/help.md"
+          target="_blank"
           title="查看帮助"
         >
           <VIcon
@@ -139,6 +140,7 @@ export default Vue.extend({
   }
 }
 .keymap-settings {
+  font-size: 12px;
   display: flex;
   flex-direction: column;
   padding: 12px 12px 12px 18px;

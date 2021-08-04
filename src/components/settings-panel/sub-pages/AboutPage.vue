@@ -12,11 +12,40 @@
           {{ meta.name }}
         </div>
         <div class="meta-info-version">
-          v{{ meta.version }}
+          {{ meta.compilationInfo.versionWithTag }}
         </div>
         <div class="meta-info-description">
           {{ meta.description }}
         </div>
+        <!-- <div class="meta-info-commit">
+          Commit Hash: {{ meta.compilationInfo.commitHash.substring(0, 8) }}
+        </div> -->
+      </div>
+      <div class="script-links">
+        <a target="_blank" href="https://github.com/the1812/Bilibili-Evolved/tree/v2/" class="homepage script-link">
+          <VButton>
+            <VIcon icon="mdi-home-outline" :size="20" />
+            主页
+          </VButton>
+        </a>
+        <a target="_blank" href="https://github.com/the1812/Bilibili-Evolved/issues" class="feedback script-link">
+          <VButton>
+            <VIcon icon="mdi-message-text-outline" :size="18" />
+            反馈
+          </VButton>
+        </a>
+        <a target="_blank" href="https://github.com/the1812/Bilibili-Evolved/releases" class="releases script-link">
+          <VButton>
+            <VIcon icon="mdi-update" :size="20" />
+            更新日志
+          </VButton>
+        </a>
+        <a target="_blank" href="https://github.com/the1812/Bilibili-Evolved/blob/preview/doc/donate.md" class="donate script-link">
+          <VButton>
+            <VIcon icon="mdi-heart-outline" :size="18" />
+            捐赠
+          </VButton>
+        </a>
       </div>
       <div class="about-page-actions">
         <VButton
@@ -36,6 +65,7 @@
 
 <script lang="ts">
 import { meta } from '@/core/meta'
+import { formatDateTime } from '@/core/utils/formatters'
 import {
   VButton,
   VIcon,
@@ -54,6 +84,7 @@ export default Vue.extend({
     }
   },
   methods: {
+    formatDateTime,
     async runAction(action: AboutPageAction, event: MouseEvent) {
       action.disabled = true
       try {
@@ -100,11 +131,21 @@ export default Vue.extend({
         }
       }
     }
+    .script-links {
+      .script-link {
+        @include h-stretch();
+        .be-button {
+          flex: 1;
+        }
+      }
+    }
+    .script-links,
     .about-page-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      @include h-stretch(8px);
+      flex-wrap: wrap;
+      .script-link,
       .about-page-action {
+        flex: 1 0 auto;
         .be-icon {
           margin-right: 6px;
         }

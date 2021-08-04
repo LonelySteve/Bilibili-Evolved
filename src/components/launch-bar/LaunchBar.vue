@@ -9,8 +9,8 @@
           type="text"
           autocomplete="off"
           :placeholder="recommended.word"
-          @keydown.enter="handleEnter"
-          @keydown.down.prevent="$refs.list.querySelector('.suggest-item').focus()"
+          @keydown.enter.stop="handleEnter"
+          @keydown.down.prevent.stop="$refs.list.querySelector('.suggest-item').focus()"
         />
         <button class="submit" title="执行" tabindex="-1" @click="handleEnter">
           <VIcon icon="right-arrow" :size="20"></VIcon>
@@ -29,13 +29,16 @@
           tabindex="0"
           class="history-item suggest-item"
           :title="a.name"
-          @click="a.action()"
-          @keydown.enter="a.action()"
-          @keydown.shift.delete="deleteHistory($event, index)"
-          @keydown.up.prevent="previousItem($event, index)"
-          @keydown.down.prevent="nextItem($event, index)"
+          @click.self="a.action()"
+          @keydown.enter.stop="a.action()"
+          @keydown.shift.delete.stop="deleteHistory($event, index)"
+          @keydown.up.stop.prevent="previousItem($event, index)"
+          @keydown.down.stop.prevent="nextItem($event, index)"
         >
-          <div class="name">
+          <div
+            class="name"
+            @click="a.action()"
+          >
             {{ a.name }}
           </div>
           <div
@@ -51,9 +54,9 @@
           class="clear-history suggest-item"
           tabindex="0"
           @click="clearHistory()"
-          @keydown.enter="clearHistory()"
-          @keydown.up.prevent="previousItem($event, actions.length)"
-          @keydown.down.prevent="nextItem($event, actions.length)"
+          @keydown.enter.stop="clearHistory()"
+          @keydown.up.prevent.stop="previousItem($event, actions.length)"
+          @keydown.down.prevent.stop="nextItem($event, actions.length)"
         >
           <VIcon icon="mdi-trash-can-outline" :size="18"></VIcon>清除搜索历史
         </div>
@@ -76,9 +79,9 @@
           class="action-item suggest-item"
           :title="a.name"
           @click="a.action()"
-          @keydown.enter="a.action()"
-          @keydown.up.prevent="previousItem($event, index)"
-          @keydown.down.prevent="nextItem($event, index)"
+          @keydown.enter.stop="a.action()"
+          @keydown.up.prevent.stop="previousItem($event, index)"
+          @keydown.down.prevent.stop="nextItem($event, index)"
         >
           <component :is="a.content" v-if="a.content" :name="a.name"></component>
           <template v-else>
@@ -90,8 +93,13 @@
   </div>
 </template>
 <script lang="ts">
+import {
+  VIcon,
+  VLoading,
+  VEmpty,
+} from '@/ui'
 import { registerAndGetData } from '@/plugins/data'
-import { dqa } from '@/core/utils'
+import { select } from '@/core/spin-query'
 import {
   LaunchBarActionProviders,
   LaunchBarActionProvider,
@@ -100,13 +108,21 @@ import {
 import { searchProvider, search } from './search-provider'
 import {
   historyProvider,
-  deleteHistory as del,
-  clearHistory as clear,
+  deleteHistoryItem as del,
+  clearHistoryItems as clear,
 } from './history-provider'
 
 const [actionProviders] = registerAndGetData(LaunchBarActionProviders, [
   searchProvider,
 ]) as [LaunchBarActionProvider[]]
+async function getOnlineActions() {
+  await Promise.all(
+    actionProviders.map(async provider => {
+      this.actions.push(...(await provider.getActions(this.keyword)))
+    }),
+  )
+  this.noActions = this.actions.length === 0
+}
 async function getActions() {
   this.noActions = false
   if (this.isHistory) {
@@ -115,12 +131,7 @@ async function getActions() {
   }
   const actions: LaunchBarAction[] = []
   this.actions = actions
-  await Promise.all(
-    actionProviders.map(async provider => {
-      actions.push(...(await provider.getActions(this.keyword)))
-    }),
-  )
-  this.noActions = actions.length === 0
+  this.getOnlineActions()
 }
 
 const [recommended] = registerAndGetData('launchBar.recommended', {
@@ -129,9 +140,9 @@ const [recommended] = registerAndGetData('launchBar.recommended', {
 })
 export default Vue.extend({
   components: {
-    VIcon: () => import('@/ui/icon/VIcon.vue').then(m => m.default),
-    VLoading: () => import('@/ui/VLoading.vue').then(m => m.default),
-    VEmpty: () => import('@/ui/VEmpty.vue').then(m => m.default),
+    VIcon,
+    VLoading,
+    VEmpty,
   },
   data() {
     return {
@@ -147,38 +158,29 @@ export default Vue.extend({
     },
   },
   watch: {
-    keyword(input: string) {
-      if (input.length === 0) {
-        this.getActions()
-      } else {
-        this.debounceGetActions()
-      }
+    keyword() {
+      this.getActions()
     },
   },
   async mounted() {
     this.getActions()
-    // if (!getComponentSettings('hideSearchRecommendations').enabled) {
-    //   const json = await getJson(
-    //     'https://api.bilibili.com/x/web-interface/search/default',
-    //   )
-    //   if (json.code === 0) {
-    //     this.recommended.word = json.data.show_name
-    //     let href: string
-    //     if (json.data.url !== '') {
-    //       href = json.data.url
-    //     } else if (json.data.name.startsWith('av')) {
-    //       href = `https://www.bilibili.com/${json.data.name}`
-    //     } else {
-    //       href = `https://search.bilibili.com/all?keyword=${json.data.name}`
-    //     }
-    //     this.recommended.href = href
-    //   } else {
-    //     console.error('获取搜索推荐词失败')
-    //   }
-    // }
+    select('#search-keyword').then((input: HTMLInputElement) => {
+      if (!input) {
+        return
+      }
+      this.keyword = input.value
+      document.addEventListener('change', e => {
+        if (!(e.target instanceof HTMLInputElement)) {
+          return
+        }
+        if (e.target.id === 'search-keyword') {
+          this.keyword = e.target.value
+        }
+      })
+    })
   },
   methods: {
-    debounceGetActions: lodash.debounce(getActions, 200),
+    getOnlineActions: lodash.debounce(getOnlineActions, 200),
     getActions,
     async handleEnter() {
       if (this.keyword.length > 0) {
@@ -198,26 +200,30 @@ export default Vue.extend({
     },
     previousItem(e: KeyboardEvent, index: number) {
       if (index === 0) {
-        this.$refs.input.focus()
+        this.focus()
       } else {
-        ((e.target as HTMLElement).previousElementSibling as HTMLElement).focus()
+        ((e.currentTarget as HTMLElement).previousElementSibling as HTMLElement).focus()
       }
     },
     nextItem(e: KeyboardEvent, index: number) {
-      if (index !== dqa('.launch-bar .suggest-item').length - 1) {
-        ((e.target as HTMLElement).nextElementSibling as HTMLElement).focus()
+      const lastItemIndex = this.actions.length - (this.isHistory ? 0 : 1)
+      if (index !== lastItemIndex) {
+        ((e.currentTarget as HTMLElement).nextElementSibling as HTMLElement).focus()
       }
     },
     search,
     deleteHistory(e: Event, index: number) {
-      del(this.actions[index].name)
       this.previousItem(e, index)
+      del(this.actions[index].name)
       this.getActions()
     },
     clearHistory() {
+      this.focus()
       clear()
-      this.$refs.input.focus()
       this.getActions()
+    },
+    focus() {
+      this.$refs.input.focus()
     },
   },
 })
@@ -228,11 +234,11 @@ export default Vue.extend({
   --color: black;
   color: var(--color);
   position: relative;
-  display: flex;
-  align-items: center;
+  @include h-center();
   .input-area {
     display: flex;
     flex-direction: column;
+    flex: 1;
     .recommended-target {
       display: none;
     }
@@ -248,6 +254,7 @@ export default Vue.extend({
         color: inherit;
         box-sizing: border-box;
         width: 15vw;
+        font-size: inherit;
         &::placeholder {
           color: inherit !important;
           opacity: 0.8;
@@ -296,7 +303,8 @@ export default Vue.extend({
       font-style: normal;
     }
     .suggest-item {
-      padding: 6px 14px;
+      outline: none !important;
+      padding: 6px 6px 6px 10px;
       cursor: pointer;
       &.disabled {
         cursor: default;
@@ -308,21 +316,19 @@ export default Vue.extend({
         background-color: #8882;
       }
       &:first-child {
-        margin-top: 6px;
-        border-radius: 2px 2px 0 0;
+        padding-top: 8px;
+        border-radius: 7px 7px 0 0;
       }
       &:last-child {
-        margin-bottom: 6px;
-        border-radius: 0 0 2px 2px;
+        padding-bottom: 8px;
+        border-radius: 0 0 7px 7px;
       }
       .badge-item {
-        display: flex;
-        align-items: center;
+        @include h-center(6px);
         .badge {
           padding: 2px 6px;
           border-radius: 4px;
           background-color: #8882;
-          margin-right: 6px;
         }
       }
     }
@@ -333,14 +339,12 @@ export default Vue.extend({
       }
     }
     .history-item {
-      display: flex;
-      align-items: center;
+      @include h-center(8px);
       .name {
         flex: 1 0 auto;
         max-width: calc(100% - 28px);
         overflow: hidden;
         text-overflow: ellipsis;
-        margin-right: 8px;
       }
       .delete-history {
         opacity: 0.5;
@@ -350,11 +354,12 @@ export default Vue.extend({
       }
     }
     .clear-history {
-      display: flex;
-      align-items: center;
+      @include h-center(6px);
+      opacity: 0.5;
       justify-content: center;
-      .be-icon {
-        margin-right: 6px;
+      &:hover,
+      &:focus-within {
+        opacity: 1;
       }
     }
   }

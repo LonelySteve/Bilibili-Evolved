@@ -11,11 +11,10 @@ export const component: ComponentMetadata = {
     componentsTags.style,
     componentsTags.general,
   ],
-  enabledByDefault: true,
   options: {
     hidden: {
       hidden: true,
-      defaultValue: ['blank1', 'blank4', 'drawing', 'music', 'gamesIframe'],
+      defaultValue: ['blank1', 'blank4', 'drawing', 'music', 'gamesIframe', 'bangumi', 'match'],
       displayName: '隐藏的元素',
     },
     order: {
@@ -56,6 +55,11 @@ export const component: ComponentMetadata = {
       defaultValue: false,
       displayName: '触摸模式',
     },
+    showDeadVideos: {
+      defaultValue: false,
+      displayName: '显示已失效视频',
+      hidden: true,
+    },
   },
   urlInclude,
   urlExclude,
@@ -69,14 +73,14 @@ export const component: ComponentMetadata = {
   unload: async () => {
     const navbar = document.querySelectorAll('.custom-navbar,.custom-navbar-settings')
     navbar.forEach((it: HTMLElement) => (it.style.display = 'none'))
-    document.getElementById(styleID)?.remove()
+    // document.getElementById(styleID)?.remove()
   },
   reload: async () => {
     const navbar = document.querySelectorAll('.custom-navbar,.custom-navbar-settings')
     navbar.forEach((it: HTMLElement) => (it.style.display = 'flex'))
-    const { default: style } = await import('./hide-original.scss')
-    const { addImportantStyle } = await import('@/core/style')
-    addImportantStyle(style, styleID)
+    // const { default: style } = await import('./hide-original.scss')
+    // const { addImportantStyle } = await import('@/core/style')
+    // addImportantStyle(style, styleID)
   },
   extraOptions: () => import('./settings/ExtraOptions.vue').then(m => m.default),
 }

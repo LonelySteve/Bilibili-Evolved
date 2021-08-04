@@ -1,43 +1,64 @@
 import { VueModule } from '../common-types'
 
 /**
- * `document.querySelector`
+ * 当查询 video 元素且被灰度了 WasmPlayer 时, 更换为对 bwp-video 的查询, 否则会找不到 video 元素
+ * @param selector 选择器
+ */
+export const bwpVideoFilter = (selector: string) => {
+  // if (!unsafeWindow.__ENABLE_WASM_PLAYER__) {
+  //   return selector
+  // }
+  const map = {
+    video: ', bwp-video',
+    '.bilibili-player-video video': ', .bilibili-player-video bwp-video',
+  }
+  const suffix = map[selector]
+  if (suffix) {
+    return selector + suffix
+  }
+  return selector
+}
+/**
+ * 同 `document.querySelector`, 对 `<bwp-video>` 有额外处理
  * @param selector 选择器
  */
 export function dq(selector: string): Element | null
 /**
- * 在指定元素上进行`querySelector`
+ * 在指定元素上进行 `querySelector`, 对 `<bwp-video>` 有额外处理
  * @param selector 元素
  * @param scopedSelector 选择器
  */
 export function dq(element: Element, scopedSelector: string): Element | null
 export function dq(selectorOrElement: Element | string, scopedSelector?: string): Element | null {
   if (!scopedSelector) {
-    return document.querySelector(selectorOrElement as string)
+    return document.querySelector(bwpVideoFilter(selectorOrElement as string))
   }
-  return (selectorOrElement as Element).querySelector(scopedSelector)
+  return (selectorOrElement as Element).querySelector(bwpVideoFilter(scopedSelector))
 }
 /**
- * `document.querySelectorAll` (返回转换过的真数组)
+ * 同 `document.querySelectorAll` (返回转换过的真数组), 对 `<bwp-video>` 有额外处理
  * @param selector 选择器
  */
 export function dqa(selector: string): Element[]
 /**
- * 在指定元素上进行`querySelectorAll` (返回转换过的真数组)
+ * 在指定元素上进行`querySelectorAll` (返回转换过的真数组), 对 `<bwp-video>` 有额外处理
  * @param selector 元素
  * @param scopedSelector 选择器
  */
 export function dqa(element: Element, scopedSelector: string): Element[]
 export function dqa(selectorOrElement: Element | string, scopedSelector?: string): Element[] {
   if (!scopedSelector) {
-    return Array.from(document.querySelectorAll(selectorOrElement as string))
+    return Array.from(document.querySelectorAll(bwpVideoFilter(selectorOrElement as string)))
   }
-  return Array.from((selectorOrElement as Element).querySelectorAll(scopedSelector))
+  return Array.from((selectorOrElement as Element).querySelectorAll(bwpVideoFilter(scopedSelector)))
 }
 /** 空函数 */
 export const none = () => {
   // Do nothing
 }
+/** 页面是否使用了 Wasm 播放器 */
+// eslint-disable-next-line no-underscore-dangle
+export const isBwpVideo = () => unsafeWindow.__ENABLE_WASM_PLAYER__ || dq('bwp-video')
 /**
  * 等待一定时间
  * @param time 延迟的毫秒数
@@ -153,7 +174,7 @@ export const createHook = <ParentType, HookParameters extends any[], ReturnType 
     if (!shouldCallOriginal) {
       return undefined
     }
-    return original.call(this, ...args)
+    return original?.call(this, ...args)
   } as any
   return original
 }
@@ -261,18 +282,21 @@ export const playerReady = async () => {
 /**
  * 等待视频页面的 aid, 如果是合集类页面, 会从 player API 中获取 aid 并赋值到 window 上
  */
-export const aidReady = async () => {
-  if (unsafeWindow.aid) {
-    return unsafeWindow.aid
-  }
-  const { sq } = await import('../spin-query')
-  const info = await sq(
-    () => unsafeWindow?.player?.getVideoMessage?.() as { aid?: string },
-    it => it?.aid !== undefined,
-  ).catch(() => { throw new Error('Cannot find aid') })
-  unsafeWindow.aid = info.aid
-  return info.aid as string
-}
+// export const aidReady = async () => {
+//   if (unsafeWindow.aid) {
+//     return unsafeWindow.aid
+//   }
+//   const { sq } = await import('../spin-query')
+//   const info = await sq(
+//     () => unsafeWindow?.player?.getVideoMessage?.() as { aid?: string },
+//     it => it?.aid !== undefined,
+//   )
+//   if (!info) {
+//     return null
+//   }
+//   unsafeWindow.aid = info.aid.toString()
+//   return info.aid as string
+// }
 /** 是否正在打字 */
 export const isTyping = () => {
   const { activeElement } = document
@@ -283,4 +307,45 @@ export const isTyping = () => {
     return true
   }
   return ['input', 'textarea'].includes(activeElement.nodeName.toLowerCase())
+}
+/**
+ * 提取元素中的可能的图片信息 (src, data-src, background-image 等). 如果是经过缩放的图, 会自动去除缩放参数返回原图链接
+ * @param element 元素
+ * @returns 图片的链接和扩展名
+ */
+export const retrieveImageUrl = (element: HTMLElement) => {
+  if (!(element instanceof HTMLElement)) {
+    return null
+  }
+  let url: string
+  if (element.hasAttribute('data-src')) {
+    url = element.getAttribute('data-src')
+  } else if (element instanceof HTMLImageElement) {
+    url = element.src
+  } else {
+    const { backgroundImage } = element.style
+    if (!backgroundImage) {
+      return null
+    }
+    const match = backgroundImage.match(/url\("(.+)"\)/)
+    if (!match) {
+      return null
+    }
+    url = match[1]
+  }
+  const thumbMatch = url.match(/^(.+)(\..+?)(@.+)$/)
+  if (thumbMatch) {
+    return {
+      url: thumbMatch[1] + thumbMatch[2],
+      extension: thumbMatch[2],
+    }
+  }
+  const noThumbMatch = url.match(/^(.+)(\..+?)$/)
+  if (!noThumbMatch) {
+    return null
+  }
+  return {
+    url: noThumbMatch[1] + noThumbMatch[2],
+    extension: noThumbMatch[2],
+  }
 }

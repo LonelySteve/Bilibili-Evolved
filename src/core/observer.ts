@@ -114,14 +114,30 @@ export const allMutationsOn = (
   characterData: true,
 }, callback)
 
-let everyNodesObserver: [MutationObserver, MutationObserverInit]
+const everyNodesObserver: {
+  observer: MutationObserver
+  config: MutationObserverInit
+  callbacks: MutationCallback[]
+} = {
+  observer: null,
+  config: null,
+  callbacks: [],
+}
 /**
  * 监听 `document.body` 上的所有变化, 包括自身及子孙元素的元素增减, 属性变化, 文本内容变化
  * @param callback 回调函数
  */
 export const allMutations = (callback: MutationCallback) => {
-  if (!everyNodesObserver) {
-    everyNodesObserver = allMutationsOn(document.body, callback)
+  if (!everyNodesObserver.observer) {
+    everyNodesObserver.callbacks.push(callback)
+    const [observer, config] = allMutationsOn(
+      document.body,
+      records => everyNodesObserver.callbacks.forEach(c => c(records, everyNodesObserver.observer)),
+    )
+    everyNodesObserver.observer = observer
+    everyNodesObserver.config = config
+  } else {
+    everyNodesObserver.callbacks.push(callback)
   }
   return everyNodesObserver
 }
@@ -190,6 +206,8 @@ let cidPromise: Promise<string>
  * @returns 是否有视频存在
  */
 export const videoChange = async (callback: VideoChangeCallback) => {
+  const { bpxPlayerPolyfill } = await import('./bpx-player-adaptor')
+  bpxPlayerPolyfill()
   if (!cidPromise) {
     cidPromise = select(() => {
       if (unsafeWindow.cid) {
@@ -202,6 +220,9 @@ export const videoChange = async (callback: VideoChangeCallback) => {
         }
         if (!unsafeWindow.aid && info.aid) {
           unsafeWindow.aid = info.aid.toString()
+        }
+        if (!unsafeWindow.bvid && info.bvid) {
+          unsafeWindow.bvid = info.bvid
         }
         return info.cid.toString()
       }
@@ -230,18 +251,18 @@ export const videoChange = async (callback: VideoChangeCallback) => {
     })
     cidHooked = true
   }
-  const videoContainer = await select('.bilibili-player-video video')
-  if (videoContainer) {
-    childList(videoContainer, () => callback({
-      aid: unsafeWindow.aid,
-      cid: unsafeWindow.cid,
-    }))
-  } else {
-    callback({
-      aid: unsafeWindow.aid,
-      cid: unsafeWindow.cid,
-    })
-  }
+  // const videoContainer = await select('.bilibili-player-video video')
+  // if (videoContainer) {
+  //   childList(videoContainer, () => callback({
+  //     aid: unsafeWindow.aid,
+  //     cid: unsafeWindow.cid,
+  //   }))
+  // } else {
+  callback({
+    aid: unsafeWindow.aid,
+    cid: unsafeWindow.cid,
+  })
+  // }
   videoChangeCallbacks.push(callback)
   return true
 }

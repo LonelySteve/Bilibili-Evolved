@@ -6,7 +6,7 @@
 
 [⚙ 设置](#设置)
 
-[📚 功能] TODO
+[📚 功能](doc/features/features.md)
 
 [👻 兼容性](#兼容性)
 
@@ -31,7 +31,7 @@
 ## 推荐配置
 - 操作系统: 64-bit Windows 10 / macOS 10.15+
 - 分辨率: 2K+ / 192ppi
-- 浏览器: Chrome 80+ / Firefox 65+ / Edge 80+ / Safari 14+
+- 浏览器: Chrome 84+ / Firefox 80+ / Edge 84+ / Safari 14.1+
 - 处理器: Intel Core i7 / AMD Ryzen 5
 - 内存: 8GB
 - 脚本管理器: Tampermonkey 4.11 / Violentmonkey 2.12
@@ -41,14 +41,13 @@
 # 设置
 脚本启用后, 在网页左侧中央会有功能面板和设置面板的入口. 功能面板中包含适用于当前页面的一些功能入口, 设置面板中可以管理组件的开启/关闭, 修改组件选项, 以及安装/卸载组件和插件等.
 
-全新安装的脚本实际上没有任何功能, 你需要去功能列表 (我还没做出来) 中挑选你感兴趣的功能并安装, 在设置面板的左下角可以打开组件/插件/样式管理, 界面基本差不多, 在里面粘贴要安装的链接点添加就可以了, 这个脚本能发挥出怎样的作用完全取决于你的选择.
+全新安装的脚本实际上没有任何功能, 你需要去[功能列表](doc/features/features.md)中挑选你感兴趣的功能并安装, 在设置面板的左下角可以打开组件/插件/样式管理, 界面基本差不多, 在里面粘贴要安装的链接点添加就可以了, 这个脚本能发挥出怎样的作用完全取决于你的选择.
 
-> 因为功能列表还没做出来, 所以请直接到 `registry/dist/` 中挑选功能. 未来功能列表应该能够按照 `registry/lib/` 中的代码自动生成出来.
+> 安装需要对应文件的直链, GitHub Raw 或 jsDelivr 都可以. 批量安装时逐行粘贴链接即可.
 
-> 安装需要对应文件的直链, GitHub Raw 或 jsDelivr 都可以.
+如果你曾经使用过 v1 版, 可以利用 `v1 设置迁移` 组件将旧设置导入到 v2 中, 该工具将自动把里面开启的设置对应的组件下载并安装, 使用方法可以参考[这个文档](./doc/v1-migrate.md).
 
-如果你曾经使用过 v1 版, 可以利用 `v1 设置迁移` 组件将旧设置导入到 v2 中, 该工具将自动把里面开启的设置对应的组件下载并安装. (当然, 现在也还没做出来)
-
+> ⚠️ 目前的 Technical Preview 阶段中, 只有 GitHub Stable 源可以用, 在使用 `v1 设置迁移` 时, 也需要在通用设置中把更新源设为 `GitHub`.
 
 # 兼容性
 
@@ -90,6 +89,7 @@ TODO (之前那个 contributors badge 抽风了)
 - [JSZip](https://stuk.github.io/jszip/)
 - [bilibili API collect](https://github.com/SocialSisterYi/bilibili-API-collect)
 - [popper-core](https://github.com/popperjs/popper-core)
+- [Tippy.js](https://github.com/atomiks/tippyjs)
 - [Sortable](https://github.com/SortableJS/Sortable)
 - [color](https://github.com/Qix-/color)
 - [Lodash](https://lodash.com/)

@@ -15,12 +15,12 @@ export interface LazyPanelParameters {
  * @param params 懒加载面板参数
  */
 export const loadLazyPanel = async (selector: string, params: LazyPanelParameters = {}) => {
-  const { style, enterDelay = 300, leaveDelay = 200 } = params
+  const { style, enterDelay = 750, leaveDelay = 1000 } = params
   const panel = await select(selector) as HTMLElement
   if (!panel) {
     throw new Error(`lazy panel failed! selector = ${selector}`)
   }
-  let tempStyle: HTMLStyleElement | null = null
+  let tempStyle: HTMLStyleElement
   if (style !== undefined) {
     tempStyle = document.createElement('style')
     tempStyle.textContent = style
@@ -29,8 +29,7 @@ export const loadLazyPanel = async (selector: string, params: LazyPanelParameter
   raiseEvent(panel, 'mouseover')
   await delay(enterDelay)
   raiseEvent(panel, 'mouseout')
-  await delay(leaveDelay)
-  tempStyle?.remove()
+  setTimeout(() => tempStyle?.remove(), leaveDelay)
   return panel
 }
 /**
@@ -42,7 +41,7 @@ export const loadLazyPanel = async (selector: string, params: LazyPanelParameter
 export const loadLazyPlayerSettingsPanel = async (
   buttonSelector: string,
   panelSelector: string,
-  params: LazyPanelParameters,
+  params: LazyPanelParameters = {},
 ) => {
   await loadLazyPanel(buttonSelector, {
     style: `${panelSelector} { display: none !important; }`,
@@ -58,18 +57,12 @@ export const loadLazyPlayerSettingsPanel = async (
 export const loadDanmakuSettingsPanel = () => loadLazyPlayerSettingsPanel(
   '.bilibili-player-video-danmaku-setting',
   '.bilibili-player-video-danmaku-setting-wrap',
-  {
-    enterDelay: 0,
-    leaveDelay: 500,
-  },
 )
 /** 加载字幕设置的面板 */
 export const loadSubtitleSettingsPanel = () => loadLazyPlayerSettingsPanel(
   '.bilibili-player-video-btn-subtitle',
   '.bilibili-player-video-subtitle-setting-wrap',
   {
-    enterDelay: 300,
-    leaveDelay: 200,
     style: '.bilibili-player-video-subtitle-setting-wrap, .bilibili-player-video-subtitle { display: none }',
   },
 )
