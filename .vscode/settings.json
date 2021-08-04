@@ -104,5 +104,19 @@
         "**/dev": true,
         "**/dist": true,
         "**/yarn.lock": true
-    }
+    },
+    "editor.formatOnSave": false,
+    "javascript.format.enable": false,
+    "typescript.format.enable": false,
+    "eslint.alwaysShowStatus": true,
+    "eslint.validate": [
+        "javascript",
+        "typescript"
+    ],
+    // https://github.com/microsoft/vscode-eslint/issues/939#issuecomment-609834091
+    "editor.codeActionsOnSave": [
+        "source.organizeImports",
+        "source.fixAll.eslint",
+    ],
+    "typescript.tsdk": "node_modules\\typescript\\lib"
 }

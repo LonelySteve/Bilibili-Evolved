@@ -1,13 +1,11 @@
-import { BasicSpeedService } from "./BasicSpeedService"
+import { BasicSpeedService } from './BasicSpeedService'
 
 export class RememberSpeedService extends BasicSpeedService {
-
-  start(): void {
+  async start() {
     // throw new Error("Method not implemented.")
   }
 
-  stop(): void {
+  async stop() {
     // throw new Error("Method not implemented.")
   }
-  
 }

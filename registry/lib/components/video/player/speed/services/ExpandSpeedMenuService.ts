@@ -1,271 +1,174 @@
-import { addStyle } from "@/core/style"
-import { logError } from "@/core/utils/log"
+/* eslint-disable no-underscore-dangle */
+/** eslint no-underscore-dangle: "allow" */
+
+import { addStyle, removeStyle } from '@/core/style'
+import { mountVueComponent } from '@/core/utils'
 import {
-  classNameMapping,
-  maxRateValue,
-  minRateValue,
-  nativeRates,
-  rateStepValue,
-  selectorMapping
-} from "../constants"
-import { SpeedContext } from "../context"
-import { calcOrder, formatSpeedText } from "../helpers"
-import { BasicSpeedService } from "./BasicSpeedService"
+  classNameMapping, maxRateValue, nativeRates, rateStepValue, selectorMapping,
+} from '../constants'
+import { SpeedContext } from '../context'
+import { calcOrder, formatSpeedText } from '../helpers'
+import { BasicSpeedService } from './BasicSpeedService'
+import AddSpeedEntry from './expand/AddSpeedEntry.vue'
+import ExpandSpeedItem from './expand/ExpandSpeedItem.vue'
+
+export const styleName = 'extend-video-speed-style'
+
+export const styleContent = `
+/** 非激活状态且鼠标在其上方悬浮才显示移除按钮 */
+${selectorMapping.speedMenuItem}:not(${selectorMapping.active}):hover .remove-btn {
+  display: flex;
+}
+${selectorMapping.speedMenuItem} .remove-btn:hover {
+  opacity: 1;
+  transition: all .3s;
+}
+ 
+${selectorMapping.speedMenuList} {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 360px;
+}
+`
 
 export class ExpandSpeedMenuService extends BasicSpeedService {
-  private _nameBtn: HTMLButtonElement
 
-  private _availableRates: number[]
+  private readonly _nameBtn: HTMLButtonElement
+  private readonly _menuListElementClickHandler: (ev: MouseEvent) => void
 
   constructor(context: SpeedContext) {
     super(context)
 
     this._nameBtn = context.containerElement.querySelector(
-      selectorMapping.speedNameBtn
+      selectorMapping.speedNameBtn,
     )
-  }
 
-  start(): void {
-    const { menuListElement } = this.context
-
-    menuListElement.prepend(...this.createExtraSpeedMenuItemElements())
-    // 为所有原生倍速菜单项设置 Order
-    menuListElement
-      .querySelectorAll(
-        `${selectorMapping.speedMenuItem}[data-value]:not(.extended)`
-      )
-      .forEach((it: HTMLLIElement) => {
-        it.style.order = calcOrder(parseFloat(it.getAttribute("data-value")!))
-      })
-    // 如果开启了扩展倍数，存在一种场景使倍数设置会失效：
-    //   1. 用户从原生支持的倍数切换到扩展倍数
-    //   2. 用户从扩展倍数切换到之前选中的原生倍数
-    // 这是因为播放器内部实现维护了一个速度值，但是在切换到扩展倍数时没法更新，因此切换回来的时候被判定没有发生变化
-    // 为了解决这个问题，需要通过 forceUpdate 方法替官方更新元素，为视频设置正确的倍数，并关闭菜单
-    menuListElement.addEventListener("click", (ev) => {
-      const { playbackRate, nativeSpeed } = this.context
-
+    this._menuListElementClickHandler = ev => {
       const option = ev.target as HTMLElement
       const value = parseFloat(option.dataset.value as string)
-      if ((ev.target as HTMLElement).classList.contains("extended")) {
-        this.setExtendedVideoSpeed(value)
+
+      if (isFinite(value)) {
+        this.setVideoSpeed(value)
       }
-      // 从扩展倍数切换到之前选中的原生倍数，须进行强制更新
-      if (this.extendedRates.includes(playbackRate) && nativeSpeed === value) {
-        this.forceUpdate(value)
-      }
-    })
+    }
   }
 
-  stop(): void {
-    // TODO 撤销所有副作用
-    // throw new Error("Method not implemented.")
+  async start() {
+    const { menuListElement } = this.context
+
+    await this.createExtraSpeedMenuItemElements()
+
+    // 修复扩展倍速与原生倍速的兼容问题
+    menuListElement.addEventListener('click', this._menuListElementClickHandler)
   }
 
-  get availableRates() {
-    return this._availableRates
+  async stop() {
+    const { menuListElement } = this.context
+
+    menuListElement.removeEventListener(
+      'click',
+      this._menuListElementClickHandler,
+    )
+
+    this.expandElements.forEach(element => element.remove())
+
+    removeStyle(styleName)
   }
 
-  protected get recommendedExtendedRate() {
-    const val = this.availableRates.slice(-1)[0] + rateStepValue
+  setVideoSpeed(speed: number) {
+    // 只有前后倍速值都是原生倍数值，才使用模拟点击的方式更新视频倍数，否则使用 forceSetVideoSpeed 强制更新
+    if (
+      nativeRates.includes(speed)
+      && nativeRates.includes(this.context.previousSpeed)
+    ) {
+      super.setVideoSpeed(speed)
+    } else {
+      this.forceSetVideoSpeed(speed)
+    }
+  }
+
+  protected updateOrder() {
+    const { menuListElement } = this.context
+
+    // 为所有倍速菜单项设置 Order
+    menuListElement
+      .querySelectorAll(`${selectorMapping.speedMenuItem}[data-value]`)
+      .forEach((it: HTMLLIElement) => {
+        it.style.order = calcOrder(parseFloat(it.getAttribute('data-value')!))
+      })
+  }
+
+  public static calcRecommendedValue(speedList: number[]) {
+    const val = speedList.slice(-1)[0] + rateStepValue
     return val > maxRateValue ? null : val
   }
 
-  protected get extendedRates() {
-    return this.context.options.extendVideoSpeedList
+  updateExtendVideoSpeedList(value: any) {
+    throw new Error('Method not implemented.')
   }
 
-  protected set extendedRates(rates: number[]) {
-    this._availableRates = [...nativeRates, ...rates].sort((a, b) => a - b)
-    this.context.options.extendVideoSpeedList = rates
-  }
+  protected async createExtraSpeedMenuItemElements() {
+    const { options: { extendVideoSpeedList }, menuListElement } = this.context
 
-  protected setExtendedVideoSpeed(speed: number) {
-    if (nativeRates.includes(speed)) {
-      this.getSpeedMenuItemElement(speed).click()
-    } else {
-      this.forceUpdate(speed)
-    }
-  }
+    // 添加样式
+    addStyle(styleContent, styleName)
 
-  protected createExtendedSpeedMenuItemElement(rate: number) {
-    const li = document.createElement("li")
-    li.innerText = formatSpeedText(rate)
-    li.classList.add(classNameMapping.speedMenuItem, "extended")
-    li.dataset.value = rate.toString()
-    li.style.order = calcOrder(rate)
+    let addSpeedEntryElement: HTMLElement
+    const extendSpeedItemElements: HTMLElement[] = []
 
-    // 创建【移除图标】
-    const i = document.createElement("i")
-    i.classList.add("mdi", "mdi-close-circle")
-    i.addEventListener(
-      "click",
-      () => {
-        this.extendedRates = _.pull(this.extendedRates, rate)
-        li.remove()
-      },
-      { once: true }
-    )
+    const update = (first = false) => {
+      const addSpeedEntry = mountVueComponent(AddSpeedEntry.extend({
+        propsData: {
+          recommendedValue: ExpandSpeedMenuService.calcRecommendedValue(extendVideoSpeedList),
+        },
+      }), addSpeedEntryElement)
 
-    li.append(i)
+      addSpeedEntryElement = addSpeedEntry.$el as HTMLElement
 
-    return li
-  }
-
-  protected createAddEntryElement() {
-    const updateInput = (elem: HTMLInputElement) => {
-      const value = this.recommendedExtendedRate
-      elem.setAttribute(
-        "min",
-        value
-          ? (elem.value = value.toString())
-          : ((elem.value = ""), minRateValue.toString())
-      )
-    }
-
-    const li = document.createElement("li")
-    li.classList.add(classNameMapping.speedMenuItem)
-
-    const iconElement = document.createElement("i")
-    iconElement.classList.add("mdi", "mdi-playlist-plus")
-
-    const input = document.createElement("input")
-    input.classList.add("add-speed-entry")
-    input.setAttribute("type", "number")
-    input.setAttribute("max", maxRateValue.toString())
-    input.setAttribute("step", rateStepValue.toString())
-    input.setAttribute("title", "增加新的倍数值")
-    updateInput(input)
-    input.addEventListener("keydown", (ev) => {
-      if (ev.key === "Enter") {
-        const value = parseFloat(input.value)
-        if (!isFinite(value)) {
-          logError("无效的倍数值")
-          return false
+      const extendSpeedItems = extendVideoSpeedList.map(value => mountVueComponent(ExpandSpeedItem.extend({
+        propsData: {
+          value
         }
-        if (value < minRateValue) {
-          logError("倍数值太小了")
-          return false
-        }
-        if (value > maxRateValue) {
-          logError("倍数值太大了")
-          return false
-        }
-        if (this.availableRates.includes(value)) {
-          logError("不能重复添加已有的倍数值")
-          return false
-        }
-        this.extendedRates.push(value)
-        this.extendedRates = this.extendedRates
+      })))
 
-        let afterElement = li.nextElementSibling as HTMLLIElement
-        while (
-          !afterElement.dataset.value ||
-          (parseFloat(afterElement.dataset.value) > nativeRates.slice(-1)[0] &&
-            value < parseFloat(afterElement.dataset.value))
-        ) {
-          afterElement = afterElement.nextElementSibling as HTMLLIElement
-        }
-        afterElement.before(this.createExtendedSpeedMenuItemElement(value))
+      extendSpeedItemElements
+
+      if (first) {
+        menuListElement.prepend(addSpeedEntryElement)
       }
-    })
+    }
 
-    li.prepend(iconElement, input)
+    const items = extendVideoSpeedList.map(mountVueComponent(ExpandSpeedItem))
 
-    input.style.display = "none"
-    li.addEventListener("mouseenter", () => {
-      updateInput(input)
-      input.style.display = "inline"
-      iconElement.style.display = "none"
-      input.focus()
-    })
-    li.addEventListener("mouseleave", () => {
-      iconElement.style.display = "inline"
-      input.style.display = "none"
-    })
+    return () => {
 
-    return li
+    }
   }
 
-  protected addStyle(name: string) {
-    // 应用样式
-    addStyle(
-      `
-        ${selectorMapping.speedContainer} ${selectorMapping.speedMenuItem}:first-child .mdi-playlist-plus {
-          font-size: 1.5em;
-        }
-        ${selectorMapping.speedContainer} ${selectorMapping.speedMenuItem}:first-child input {
-          font-size: inherit;
-          color: inherit;
-          line-height: inherit;
-          background: transparent;
-          outline: none;
-          width: 100%;
-          border: none;
-          text-align: center;
-        }
-        ${selectorMapping.speedMenuItem} .mdi-close-circle {
-          color: inherit;
-          opacity: 0.5;
-          display: none;
-          position: absolute;
-          right: 4px;
-        }
-        .${selectorMapping.speedMenuItem}:not(${selectorMapping.active}):hover .mdi-close-circle {
-          display: inline;
-        }
-        .${selectorMapping.speedMenuItem} .mdi-close-circle:hover {
-          opacity: 1;
-          transition: all .3s;
-        }
-        /* https://stackoverflow.com/a/4298216 */
-        /* Chrome */
-        .add-speed-entry::-webkit-outer-spin-button,
-        .add-speed-entry::-webkit-inner-spin-button {
-          -webkit-appearance: none;
-          margin: 0;
-        }
-        /* Firefox */
-        .add-speed-entry[type=number] {
-          -moz-appearance:textfield;
-        }
-        ${selectorMapping.speedMenuList} {
-          display: flex;
-          flex-direction: column;
-        }
-`,
-      name
-    )
-  }
+  /**
+   * 强行设置视频倍数，此方法会更新倍速菜单以及倍速按钮文本
+   *
+   * @param value 要强行设置的倍速值
+   */
+  protected forceSetVideoSpeed(value: number) {
+    const { menuListElement, videoElement, containerElement } = this.context
 
-  protected createExtraSpeedMenuItemElements(
-    styleName = "extend-video-speed-style"
-  ) {
-    this.addStyle(styleName)
-
-    const elements = this.extendedRates
-      .map((rate) => this.createExtendedSpeedMenuItemElement(rate))
-      .reverse()
-
-    elements.unshift(this.createAddEntryElement())
-
-    return elements
-  }
-
-  protected forceUpdate(value: number) {
-    const { menuListElement, playbackRate, containerElement } = this.context
-
+    // 更新菜单项激活样式
     menuListElement
       .querySelector(
-        `${selectorMapping.speedMenuItem}[data-value="${playbackRate}"]`
+        `${selectorMapping.speedMenuItem}${selectorMapping.active}`,
       )
       ?.classList.remove(classNameMapping.active)
     menuListElement
       .querySelector(`${selectorMapping.speedMenuItem}[data-value="${value}"]`)
       ?.classList.add(classNameMapping.active)
 
-    this.context.playbackRate = value
+    // 重设倍数
+    videoElement.playbackRate = value
+    // 关闭菜单
     containerElement.classList.remove(classNameMapping.show)
+    // 更新倍速按钮的文本
     this._nameBtn.innerText = formatSpeedText(value)
   }
 }

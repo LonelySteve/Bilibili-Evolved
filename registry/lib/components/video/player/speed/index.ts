@@ -1,12 +1,18 @@
-import { ComponentEntry, ComponentMetadata } from "@/components/types"
-import { addComponentListener } from "@/core/settings"
-import { ContextOptions, createContext, RememberStrategy } from "./context"
+import { ComponentEntry, ComponentMetadata } from '@/components/types'
+import { addComponentListener } from '@/core/settings'
+import { registerAndGetData } from '@/plugins/data'
+import {
+  ObserveMode,
+  RememberMode,
+  SpeedComponentOptions,
+  SpeedContext,
+} from './context'
 import {
   ExpandSpeedMenuService,
   getExpandSpeedMenuService,
   getRememberSpeedService,
-  RememberSpeedService
-} from "./services"
+  RememberSpeedService,
+} from './services'
 
 const entry: ComponentEntry = ({
   coreApis: {
@@ -23,92 +29,98 @@ const entry: ComponentEntry = ({
     return
   }
 
-  let environment
+  const contexts = registerAndGetData<SpeedContext[]>('speed.contexts')
 
   let rememberSpeedService: RememberSpeedService
   let expandSpeedMenuService: ExpandSpeedMenuService
 
   videoChange(async () => {
-    environment?.destroy()
+    let context = contexts[0]
+
+    context?.destroy()
 
     try {
-      environment = await createContext((settings as unknown) as ContextOptions)
+      context = new SpeedContext(
+        context ?? {
+          options: (settings.options as unknown) as SpeedComponentOptions,
+        },
+      )
+      contexts[0] = context
+      await context.init()
     } catch (error) {
-      logError(`【倍数组件】创建上下文失败：${error}`)
+      logError(`【倍速组件】创建上下文失败：${error}`)
       return
     }
 
     addComponentListener(
       `${name}.rememberSpeed`,
-      (value) => {
+      async value => {
         if (value) {
-          rememberSpeedService?.stop()
-          rememberSpeedService = getRememberSpeedService(environment)
-          rememberSpeedService.start()
+          await rememberSpeedService?.stop()
+          rememberSpeedService = getRememberSpeedService(context)
+          await rememberSpeedService.start()
         } else {
-          rememberSpeedService?.stop()
+          await rememberSpeedService?.stop()
         }
       },
-      true
+      true,
     )
 
     addComponentListener(
       `${name}.expandSpeedMenu`,
-      (value) => {
+      async value => {
         if (value) {
-          expandSpeedMenuService?.stop()
-          expandSpeedMenuService = getExpandSpeedMenuService(environment)
-          expandSpeedMenuService.start()
+          await expandSpeedMenuService?.stop()
+          expandSpeedMenuService = getExpandSpeedMenuService(context)
+          await expandSpeedMenuService.start()
         } else {
-          expandSpeedMenuService?.stop()
+          await expandSpeedMenuService?.stop()
         }
       },
-      true
+      true,
     )
-  })
-}
 
-export enum ObserveStrategy {
-  /** 传统  */
-  legacy = "传统",
-  /** 属性覆盖 */
-  defineProperty = "属性覆盖",
+    addComponentListener(`${name}.extendVideoSpeedList`, value => {
+      expandSpeedMenuService.updateExtendVideoSpeedList(value)
+    })
+  })
 }
 
 export const component: ComponentMetadata = {
   entry,
-  name: "videoSpeed",
-  displayName: "视频倍数",
+  name: 'videoSpeed',
+  displayName: '视频倍速',
+  configurable: false,
   enabledByDefault: true,
-  description: "扩展播放器的视频倍数功能",
+  description: '扩展播放器的视频倍速功能',
   tags: [componentsTags.video],
   options: {
     expandSpeedMenu: {
-      displayName: "扩展播放器的视频倍数菜单",
+      displayName: '扩展播放器的视频倍速菜单',
       defaultValue: true,
     },
     rememberSpeed: {
-      displayName: "记忆播放器的视频倍数",
-      dropdownEnum: RememberStrategy,
-      defaultValue: RememberStrategy.none,
+      displayName: '记忆播放器的视频倍速',
+      dropdownEnum: RememberMode,
+      defaultValue: RememberMode.none,
     },
-    // TODO 通过 Object.defineProperty 实现更好的拦截策略，以兼容更多脚本或插件
     observeMode: {
-      displayName: "监视模式",
-      defaultValue: ObserveStrategy.defineProperty,
+      displayName: '监视模式',
+      dropdownEnum: ObserveMode,
+      defaultValue: ObserveMode.defineProperty,
     },
     rememberVideoSpeedList: {
-      displayName: "记忆视频倍数列表",
+      displayName: '记忆视频倍速列表',
       defaultValue: {},
       hidden: true,
     },
     extendVideoSpeedList: {
-      displayName: "扩展视频倍数列表",
-      defaultValue: [],
+      displayName: '扩展视频倍速列表',
+      defaultValue: [2.5, 3.0],
       hidden: true,
     },
     fallbackSpeed: {
-      displayName: "后备倍数值",
+      displayName: '后备倍速值',
       defaultValue: 1,
       hidden: true,
     },

@@ -1,62 +1,241 @@
-import { selectorMapping } from "./constants"
-import { _select } from "./helpers"
-
-export enum RememberStrategy {
+/* eslint-disable no-underscore-dangle */
+import { attributesSubtree } from '@/core/observer'
+import { getHook } from '@/plugins/hook'
+import {
+  classNameMapping,
+  hooks,
+  nativeRates,
+  selectorMapping,
+} from './constants'
+import { MapWithDefault, _select } from './helpers'
+/**
+ * 记忆模式
+ */
+export enum RememberMode {
   /** 停用 */
-  none = "停用",
+  none = '停用',
   /** 按视频级别 */
-  video = "按视频级别",
-  /** 上次级别 */
-  latest = "按最近一次",
+  video = '按视频级别',
+  /** 按最近一次 */
+  recent = '按最近一次',
 }
 
-export interface ContextOptions {
-  // 扩展播放器的视频倍数菜单
-  expandSpeedMenu: boolean
-  // 记忆播放器的视频倍数
-  rememberSpeed: RememberStrategy
-  // 记忆视频倍数列表
-  rememberVideoSpeedList: Record<number, (string | number)[]>
-  // 扩展视频倍数列表
-  extendVideoSpeedList: number[]
-  // 后备倍数值
-  fallbackSpeed: number
+/**
+ * 监视模式
+ */
+export enum ObserveMode {
+  /** 传统  */
+  legacy = '传统',
+  /** 属性覆盖 */
+  defineProperty = '属性覆盖',
 }
 
-export interface SpeedContext {
-  /** 容器元素 */
-  readonly containerElement: HTMLElement
+export interface SpeedComponentOptions {
   /**
-   * 视频元素
+   * 监视模式 - 获得倍速更改通知的方式
    *
-   * 【注意】不要通过此元素设置倍数，即**不要使用**类似 `videoElement.playbackRate = 1` 这样的方式来尝试变更倍数，这会导致上下文状态过时。正确的方式是直接对此上下文对象的 `playbackRate` 进行赋值。
+   * - legacy: 传统方式，利用 MutationObserver 在菜单元素上进行子孙属性监听，此模式可以兼容通过模拟点击倍速菜单项来更改倍数的外部脚本/扩展
+   * - defineProperty: Object.defineProperty 方式，拦截对视频元素的 playbackRate 的属性访问，此模式可以兼容绝大部分的外部脚本/扩展
    */
-  readonly videoElement: HTMLVideoElement
-  /** 当前视频播放速度 */
-  playbackRate: number
-  /** 菜单列表元素 */
-  readonly menuListElement: HTMLElement
-  /** 当前倍数值 */
-  readonly speed?: number
-  /** 上一倍数值 */
-  readonly previousSpeed?: number
-  /** 当前原生的倍数值，通常在换P更新时指定 */
-  readonly nativeSpeed?: number
-  /** 初始化环境所用的选项 */
-  readonly options: ContextOptions
-  /** 销毁并释放此环境所用的资源 */
-  destroy(): void
+  observeMode: ObserveMode
+  /** 是否扩展倍速菜单 */
+  expandSpeedMenu: boolean
+  /** 倍速记忆模式 */
+  rememberSpeed: RememberMode
+  /** 倍速记忆列表 */
+  rememberVideoSpeedList: Record<number, (string | number)[]>
+  /** 扩展视频倍速列表 */
+  extendVideoSpeedList: number[]
+  /** 后备倍速 */
+  fallbackSpeed: number[]
 }
 
-export async function createContext(options: ContextOptions) {
-  const containerElement = await _select(selectorMapping.speedContainer)
-  const videoElement = (await _select(
-    selectorMapping.video
-  )) as HTMLVideoElement
+/**
+ * 上下文初始化
+ */
+export interface SpeedContextInit {
+  /** 容器元素 */
+  containerElement?: HTMLElement
+  /** 视频元素 */
+  videoElement?: HTMLVideoElement
+  /** 上一倍速值，缺省情况下为 1.0x */
+  previousSpeed?: number
+  /** 当前原生的倍速值，通常在换P更新时指定 */
+  nativeSpeed?: number
+  /** 组件选项 */
+  options: SpeedComponentOptions
+}
 
-  return {
-    containerElement,
-    videoElement,
-    options,
+/**
+ * 倍速上下文
+ */
+export class SpeedContext {
+  private static defedVideoElementMapping: MapWithDefault<
+    HTMLVideoElement,
+    SpeedContext[]
+  > = new MapWithDefault(() => [])
+
+  private _init: SpeedContextInit
+  private _containerElement?: HTMLElement
+  private _videoElement?: HTMLVideoElement
+  private _menuListElement?: HTMLElement
+  private _speed?: number
+  private _previousSpeed?: number
+  private _nativeSpeed?: number
+
+  private _observer?: MutationObserver
+
+  /**
+   * 创建倍数上下文实例
+   *
+   * 和之前 v1 版本的实现相比，这里一定是全新的倍数上下文，若传入上下文对象，则可以拷贝一份它的实例
+   *
+   * @param arg 初始化参数，或倍速上下文对象
+   */
+  constructor(arg: SpeedContextInit | SpeedContext) {
+    if (arg instanceof SpeedContext) {
+      arg = _.assign({}, arg._init, _.pick(arg, 'previousSpeed', 'nativeSpeed'))
+    }
+    this._init = Object.freeze(arg)
+  }
+
+  public async init() {
+    const {
+      containerElement,
+      videoElement,
+      previousSpeed,
+      nativeSpeed,
+    } = this._init
+
+    this._previousSpeed = previousSpeed
+    this._nativeSpeed = nativeSpeed
+
+    this._containerElement = containerElement
+      ?? (await _select<HTMLElement>(selectorMapping.speedContainer))
+
+    this._videoElement = videoElement ?? (await _select<HTMLVideoElement>(selectorMapping.video))
+    this._speed = this._videoElement.playbackRate
+
+    this._menuListElement = await _select<HTMLElement>({
+      selector: selectorMapping.speedMenuList,
+      context: this._containerElement,
+    })
+
+    this.observe()
+  }
+
+  protected observe() {
+    const { observeMode } = this.options
+
+    switch (observeMode) {
+      case ObserveMode.legacy:
+        this._observer = this.observeMenuListElement()
+        break
+      case ObserveMode.defineProperty:
+        // FIXME 修复多个上下文对象实例共用同一 videoElement，导致属性定义重复的问题
+        this.agentVideoElement()
+        break
+      default:
+        break
+    }
+  }
+
+  protected observeMenuListElement(): MutationObserver {
+    return attributesSubtree(this._menuListElement, mutations => {
+      let currentSpeed: number | undefined
+
+      // 遍历所有 mutations 以获取最新的状态值
+      mutations.forEach(mutation => {
+        if (mutation.attributeName !== 'class') {
+          return
+        }
+
+        const speedMenuItemElement = mutation.target as HTMLLIElement
+
+        // 若当前 mutation 的目标元素具有 active 的 class，则认为这是 active 态的目标元素，也就是被用户新选中的倍数选项
+        if (speedMenuItemElement.classList.contains(classNameMapping.active)) {
+          currentSpeed = parseFloat(speedMenuItemElement.dataset.value ?? '1')
+        }
+      })
+
+      this.updateSpeed(currentSpeed)
+    })[0]
+  }
+
+  protected agentVideoElement() {
+    const videoElementPlaybackRateDescriptor = Object.getOwnPropertyDescriptor(
+      Object.getPrototypeOf(Object.getPrototypeOf(this._videoElement)),
+      'playbackRate',
+    )
+
+    Object.defineProperty(this._videoElement, 'playbackRate', {
+      get: () => videoElementPlaybackRateDescriptor.get?.call(this._videoElement),
+      set: value => {
+        if (this.options.observeMode) {
+          SpeedContext.defedVideoElementMapping
+            .get(this._videoElement)
+            .forEach(context => context.updateSpeed(value))
+        }
+
+        videoElementPlaybackRateDescriptor.set?.call(this._videoElement, value)
+      },
+    })
+
+    SpeedContext.defedVideoElementMapping.get(this._videoElement).push(this)
+  }
+
+  protected updateSpeed(value?: number) {
+    // 不要过于死板，上一倍数值与当前倍数值不要相同
+    if (this._speed === value) {
+      return
+    }
+
+    this._previousSpeed = this._speed
+    this._speed = value
+
+    if (nativeRates.includes(value)) {
+      this._nativeSpeed = value
+    }
+    // 调用钩子
+    getHook(hooks.ON_SPEED_CHANGE).after(this, this.speed, this.previousSpeed)
+  }
+
+  /** 容器元素 */
+  get containerElement() {
+    return this._containerElement
+  }
+
+  /** 视频元素 */
+  get videoElement() {
+    return this._videoElement
+  }
+
+  /** 菜单列表元素 */
+  get menuListElement() {
+    return this._menuListElement
+  }
+
+  /** 当前倍速值 */
+  get speed() {
+    return this._speed
+  }
+
+  /** 上一倍速值 */
+  get previousSpeed() {
+    return this._previousSpeed
+  }
+
+  /** 当前原生的倍速值 */
+  get nativeSpeed() {
+    return this._nativeSpeed
+  }
+
+  /** 获取初始化上下文所用的选项对象 */
+  get options() {
+    return this._init.options
+  }
+
+  destroy() {
+    this._observer?.disconnect()
   }
 }
