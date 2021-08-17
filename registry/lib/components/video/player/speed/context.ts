@@ -5,20 +5,10 @@ import {
   classNameMapping,
   hooks,
   nativeRates,
-  selectorMapping,
+  selectorMapping
 } from './constants'
 import { MapWithDefault, _select } from './helpers'
-/**
- * 记忆模式
- */
-export enum RememberMode {
-  /** 停用 */
-  none = '停用',
-  /** 按视频级别 */
-  video = '按视频级别',
-  /** 按最近一次 */
-  recent = '按最近一次',
-}
+import { ExpandSpeedMenuOptions, RememberSpeedOptions } from './services'
 
 /**
  * 监视模式
@@ -30,7 +20,7 @@ export enum ObserveMode {
   defineProperty = '属性覆盖',
 }
 
-export interface SpeedComponentOptions {
+export interface SpeedComponentOptions extends ExpandSpeedMenuOptions,  RememberSpeedOptions {
   /**
    * 监视模式 - 获得倍速更改通知的方式
    *
@@ -38,16 +28,6 @@ export interface SpeedComponentOptions {
    * - defineProperty: Object.defineProperty 方式，拦截对视频元素的 playbackRate 的属性访问，此模式可以兼容绝大部分的外部脚本/扩展
    */
   observeMode: ObserveMode
-  /** 是否扩展倍速菜单 */
-  expandSpeedMenu: boolean
-  /** 倍速记忆模式 */
-  rememberSpeed: RememberMode
-  /** 倍速记忆列表 */
-  rememberVideoSpeedList: Record<number, (string | number)[]>
-  /** 扩展视频倍速列表 */
-  extendVideoSpeedList: number[]
-  /** 后备倍速 */
-  fallbackSpeed: number[]
 }
 
 /**
@@ -238,4 +218,9 @@ export class SpeedContext {
   destroy() {
     this._observer?.disconnect()
   }
+}
+
+export function createContext(arg: SpeedContextInit | SpeedContext): SpeedContext {
+  // TODO 做 bpx player 的兼容处理
+    return new SpeedContext(arg)
 }

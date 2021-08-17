@@ -1,5 +1,5 @@
 import {
-  Executable, I18nDescription, TestPattern, VueModule,
+  Executable, I18nDescription, TestPattern, VueModule
 } from '@/core/common-types'
 import { CoreApis } from '@/core/core-apis'
 import { ComponentSettings } from '@/core/settings'
@@ -52,9 +52,7 @@ export interface ComponentOption {
   ComponentOptionValidator<string> | ComponentOptionValidator<number>
 }
 /** 组件选项信息 */
-export interface ComponentOptions {
-  [key: string]: ComponentOption
-}
+export type ComponentOptions<O = {}> =  Record<keyof O, ComponentOption>
 /** 组件标签 */
 export const componentsTags = {
   /** 视频 */
@@ -163,7 +161,7 @@ export interface FunctionalMetadata {
   urlExclude?: TestPattern
 }
 /** 组件基本信息 */
-export interface ComponentMetadata<O extends ComponentOptions = Record<string, ComponentOption>> extends FunctionalMetadata {
+export interface ComponentMetadata<O = {}> extends FunctionalMetadata {
   /** 组件名称 */
   name: string
   /** 显示名称 */
@@ -179,7 +177,7 @@ export interface ComponentMetadata<O extends ComponentOptions = Record<string, C
   /** 组件描述 (markdown), 可以设置为对象提供多语言的描述 (`key: 语言代码`) */
   description?: I18nDescription
   /** 组件子选项 */
-  options?: O
+  options?: ComponentOptions<O>
   /** i18n 数据 */
   i18n?: Record<string, LanguagePack>
   /** 作者信息 */

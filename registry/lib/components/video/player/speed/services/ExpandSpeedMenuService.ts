@@ -4,7 +4,7 @@
 import { addStyle, removeStyle } from '@/core/style'
 import { mountVueComponent } from '@/core/utils'
 import {
-  classNameMapping, maxRateValue, nativeRates, rateStepValue, selectorMapping,
+  classNameMapping, maxRateValue, nativeRates, rateStepValue, selectorMapping
 } from '../constants'
 import { SpeedContext } from '../context'
 import { calcOrder, formatSpeedText } from '../helpers'
@@ -32,7 +32,12 @@ ${selectorMapping.speedMenuList} {
 }
 `
 
-export class ExpandSpeedMenuService extends BasicSpeedService {
+export interface ExpandSpeedMenuOptions {
+  expandSpeedMenu: boolean,
+  extendVideoSpeedList: number[]
+}
+
+export class ExpandSpeedMenuService extends BasicSpeedService implements ExpandSpeedMenuOptions {
 
   private readonly _nameBtn: HTMLButtonElement
   private readonly _menuListElementClickHandler: (ev: MouseEvent) => void
@@ -53,6 +58,11 @@ export class ExpandSpeedMenuService extends BasicSpeedService {
       }
     }
   }
+  
+  get expandSpeedMenu() {
+    return false
+  }
+  extendVideoSpeedList: number[]
 
   async start() {
     const { menuListElement } = this.context

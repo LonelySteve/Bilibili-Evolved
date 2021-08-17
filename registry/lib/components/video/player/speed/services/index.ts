@@ -4,6 +4,7 @@ import { RememberSpeedService } from './RememberSpeedService'
 
 export * from './ExpandSpeedMenuService'
 export * from './RememberSpeedService'
+export * from "./BasicSpeedService"
 
 export const getExpandSpeedMenuService = _.memoize((context: SpeedContext) => new ExpandSpeedMenuService(context))
 

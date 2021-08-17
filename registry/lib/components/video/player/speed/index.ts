@@ -2,17 +2,62 @@ import { ComponentEntry, ComponentMetadata } from '@/components/types'
 import { addComponentListener } from '@/core/settings'
 import { registerAndGetData } from '@/plugins/data'
 import {
+  createContext,
   ObserveMode,
   RememberMode,
   SpeedComponentOptions,
-  SpeedContext,
+  SpeedContext
 } from './context'
 import {
-  ExpandSpeedMenuService,
-  getExpandSpeedMenuService,
-  getRememberSpeedService,
-  RememberSpeedService,
+  BasicSpeedService, ExpandSpeedMenuService, RememberSpeedService
 } from './services'
+
+const services: Record<string, BasicSpeedService> = {}
+
+const serviceListeners = [
+  {
+    service: RememberSpeedService,
+    listeners: {
+      rememberSpeed: function (this: RememberSpeedService, value: RememberMode) {
+
+      },
+      rememberVideoSpeedList: function (this: RememberSpeedService, value: Record<string, (number | string)[]>) {
+        
+      },
+      fallbackSpeed: function (this: RememberSpeedService, value: number) {
+        
+      }
+    }
+  },
+  {
+    service: ExpandSpeedMenuService,
+    listeners: {
+      expandSpeedMenu: function (this: ExpandSpeedMenuService, value: boolean) {
+        
+      },
+      extendVideoSpeedList: function (this: ExpandSpeedMenuService, value: number[]) {
+        
+      },
+    }
+  }
+]
+
+const getService = (serviceName: string, fallbackServiceCreator: () => BasicSpeedService) => {
+  return serviceName in services ? services[serviceName]: fallbackServiceCreator()
+}
+ 
+
+const initServices = (componentName: string, context: SpeedContext) => {
+  for (const [key, {service: Service, listeners}] of Object.entries(serviceListeners)) {
+    const service = getService(Service.name, () => new Service(context))
+    for (const [option, listener] of Object.entries(listeners)) {
+      addComponentListener(`${componentName}.${option}`, (value: unknown) => {
+        listener.call(service, value)
+      })
+    }
+    services[key] = service
+  }
+}
 
 const entry: ComponentEntry = ({
   coreApis: {
@@ -31,20 +76,15 @@ const entry: ComponentEntry = ({
 
   const contexts = registerAndGetData<SpeedContext[]>('speed.contexts')
 
-  let rememberSpeedService: RememberSpeedService
-  let expandSpeedMenuService: ExpandSpeedMenuService
-
   videoChange(async () => {
     let context = contexts[0]
 
     context?.destroy()
 
     try {
-      context = new SpeedContext(
-        context ?? {
-          options: (settings.options as unknown) as SpeedComponentOptions,
-        },
-      )
+      context = createContext(context ?? {
+        options: (settings.options as unknown) as SpeedComponentOptions,
+      })
       contexts[0] = context
       await context.init()
     } catch (error) {
@@ -52,42 +92,29 @@ const entry: ComponentEntry = ({
       return
     }
 
-    addComponentListener(
-      `${name}.rememberSpeed`,
-      async value => {
-        if (value) {
-          await rememberSpeedService?.stop()
-          rememberSpeedService = getRememberSpeedService(context)
-          await rememberSpeedService.start()
-        } else {
-          await rememberSpeedService?.stop()
-        }
-      },
-      true,
-    )
+    initServices(name, context)
 
-    addComponentListener(
-      `${name}.expandSpeedMenu`,
-      async value => {
-        if (value) {
-          await expandSpeedMenuService?.stop()
-          expandSpeedMenuService = getExpandSpeedMenuService(context)
-          await expandSpeedMenuService.start()
-        } else {
-          await expandSpeedMenuService?.stop()
-        }
-      },
-      true,
-    )
-
-    addComponentListener(`${name}.extendVideoSpeedList`, value => {
-      expandSpeedMenuService.updateExtendVideoSpeedList(value)
-    })
+ 
+    reload()
   })
 }
 
-export const component: ComponentMetadata = {
+const reload = () => {
+  services.forEach(service => service.start())
+}
+
+const unload = () => {
+  services.forEach(service => service.stop())
+}
+
+export const component: ComponentMetadata<SpeedComponentOptions> = {
   entry,
+  reload,
+  unload,
+  author: {
+    name: "JLoeve",
+    link: "https://github.com/LonelySteve"
+  },
   name: 'videoSpeed',
   displayName: '视频倍速',
   configurable: false,
@@ -95,28 +122,28 @@ export const component: ComponentMetadata = {
   description: '扩展播放器的视频倍速功能',
   tags: [componentsTags.video],
   options: {
+    observeMode: {
+      displayName: '监视模式',
+      dropdownEnum: ObserveMode,
+      defaultValue: ObserveMode.defineProperty,
+    },
     expandSpeedMenu: {
       displayName: '扩展播放器的视频倍速菜单',
       defaultValue: true,
+    },
+    extendVideoSpeedList: {
+      displayName: '扩展视频倍速列表',
+      defaultValue: [2.5, 3.0],
+      hidden: true,
     },
     rememberSpeed: {
       displayName: '记忆播放器的视频倍速',
       dropdownEnum: RememberMode,
       defaultValue: RememberMode.none,
     },
-    observeMode: {
-      displayName: '监视模式',
-      dropdownEnum: ObserveMode,
-      defaultValue: ObserveMode.defineProperty,
-    },
     rememberVideoSpeedList: {
       displayName: '记忆视频倍速列表',
       defaultValue: {},
-      hidden: true,
-    },
-    extendVideoSpeedList: {
-      displayName: '扩展视频倍速列表',
-      defaultValue: [2.5, 3.0],
       hidden: true,
     },
     fallbackSpeed: {

@@ -10,6 +10,8 @@ export class BasicSpeedService {
 
   async stop() {}
 
+  async update() {}
+
   get availableRates() {
     return nativeRates
   }
