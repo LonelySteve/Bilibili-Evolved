@@ -31,6 +31,16 @@ export default Vue.extend({
       },
     },
   },
+  watch: {
+    useRbvp: {
+      immediate: true,
+      handler(value: boolean) {
+        const emit = (name: string) => this.$emit('toggle-option-disabled', { name, disabled: value })
+        emit('fixGlobalSpeed')
+        emit('individualRemember')
+      },
+    },
+  },
 })
 </script>
 <style lang="scss">

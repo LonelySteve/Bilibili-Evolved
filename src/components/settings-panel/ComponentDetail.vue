@@ -31,7 +31,11 @@
             ></ComponentOption>
           </div>
           <div v-if="componentData.extraOptions" class="extra-option">
-            <component :is="componentData.extraOptions" :component-data="componentData"></component>
+            <component
+              :is="componentData.extraOptions"
+              :component-data="componentData"
+              @toggle-option-disabled="onToggleOptionDisabled"
+            ></component>
           </div>
           <slot></slot>
         </div>
@@ -141,6 +145,14 @@ export default Vue.extend({
     await this.$nextTick()
     this.$emit('mounted')
     console.log(this.componentActions)
+  },
+  methods: {
+    onToggleOptionDisabled({ name, disabled }: { name: string; disabled: boolean }) {
+      const option = (this.componentData as any).options?.[name]
+      if (option) {
+        this.$set(option, 'disabled', disabled)
+      }
+    },
   },
 })
 </script>

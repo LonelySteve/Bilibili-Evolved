@@ -6,6 +6,7 @@
     <TextBox
       v-if="type === 'text' || type === 'number'"
       change-on-blur
+      :disabled="option.disabled"
       :validator="option.validator"
       :text="value.toString()"
       :placeholder="value.toString()"
@@ -14,31 +15,45 @@
     <TextArea
       v-if="type === 'textArea'"
       change-on-blur
+      :disabled="option.disabled"
       :validator="option.validator"
       :text="value.toString()"
       :placeholder="value.toString()"
       @change="valueChange($event)"
     ></TextArea>
-    <SwitchBox v-if="type === 'boolean'" :checked="value" @change="valueChange($event)"></SwitchBox>
+    <SwitchBox
+      v-if="type === 'boolean'"
+      :checked="value"
+      :disabled="option.disabled"
+      @change="valueChange($event)"
+    ></SwitchBox>
     <ColorPicker
       v-if="type === 'color'"
       :compact="true"
       :popup-offset="-95"
       :color="value"
+      :disabled="option.disabled"
       @change="valueChange($event)"
     ></ColorPicker>
     <RangeInput
       v-if="type === 'range'"
       :validator="option.validator"
       :range="value"
+      :disabled="option.disabled"
       @change="valueChange($event)"
     ></RangeInput>
-    <ImagePicker v-if="type === 'image'" :image="value" @change="valueChange($event)"></ImagePicker>
+    <ImagePicker
+      v-if="type === 'image'"
+      :image="value"
+      :disabled="option.disabled"
+      @change="valueChange($event)"
+    ></ImagePicker>
     <VDropdown
       v-if="type === 'dropdown'"
       :value="value"
       :items="getDropdownItems(option.dropdownEnum)"
       :key-mapper="it => it"
+      :disabled="option.disabled"
       @change="valueChange($event)"
     >
       <template #item="{ item }">
@@ -50,11 +65,13 @@
       small-size
       :popup-mode="false"
       :options="option.defaultValue"
+      :disabled="option.disabled"
     ></SwitchOptions>
     <VSlider
       v-if="type === 'slider'"
       v-bind="option.slider"
       :value="value"
+      :disabled="option.disabled"
       @change="debounceValueChange($event)"
     ></VSlider>
     <div v-if="type === 'unknown'" class="unknown-option-type">未知的选项类型</div>

@@ -72,6 +72,8 @@ export interface OptionMetadata<V = unknown> {
     | ComponentOptionValidator<Range<string>>
     | ComponentOptionValidator<string>
     | ComponentOptionValidator<number>
+  /** 设为 `true` 时, 该选项在设置面板中显示为禁用状态 */
+  disabled?: boolean
 }
 
 /** 多个选项的信息 */
